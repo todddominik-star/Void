@@ -1,0 +1,129 @@
+=======================================
+  VOID — DEVELOPMENT NOTES (browser rebuild)
+  Phase 2 — October 31, 2026
+=======================================
+
+WHAT CHANGED
+------------
+Void was rebuilt from scratch as a 3D browser game (three.js). The Unity
+project is parked, not deleted. Claude now writes, runs and playtests the
+game itself; Todd only plays and gives notes. No Unity, no C#, no APK.
+
+HOW TO PLAY IT
+--------------
+- Quick play: the claude.ai artifact link (opens in the browser).
+- Full-screen app: host the files in this package (index.html,
+  manifest.webmanifest, sw.js, icon-192.png, icon-512.png) on any web host
+  (e.g. free GitHub Pages), open on the S20 in Chrome, then
+  menu > "Add to Home screen". It launches full screen, portrait, offline.
+- "Tap to play" also asks the browser for full screen.
+
+DESIGN RULES (unchanged)
+------------------------
+Zen: no timer, no failure, no score pressure. Camera ~48° above the ground.
+
+PHASE 1 FEATURES
+----------------
+- Everything is built from 1x1x1 cubes (~14,400 on the farm map).
+- Each cube falls in on its own when its center is over the hole, so big
+  things crumble in piece by piece (fixes the "house should fall in" bug).
+- Pieces no longer connected to the ground drop as a chunk (tree crowns,
+  roofs, the tethered balloon when you eat its rope anchor).
+- Debris that lands outside the hole rests on the ground and drifts in
+  when the hole gets close.
+- Camera keeps the hole at ~25% of screen width at every size, so the
+  view pulls back as you grow (fixes the late-game "hole fills the screen").
+- 9 sizes. Radii: 1.6, 2.1, 2.7, 3.4, 4.2, 5.2, 6.4, 7.8, 9.4 cubes.
+  Size-ups at 1.2/3.5/7/13/21/32/46/64% of the map eaten.
+- Thin progress ring (about 2-3 px) just outside the hole; flashes on size-up.
+- "Size N" label under the hole.
+- Top-left: the three colors with the most cubes left, plus % cleared.
+- When only a few cubes remain, an orange arrow points to the nearest one.
+- Drag is relative: the hole never jumps to your finger.
+- Soft sounds (mute button), light vibration on size-up.
+- Auto quality: shadows switch off if the phone drops below ~38 fps.
+
+FARM LAYOUT (camera looks north)
+--------------------------------
+Start meadow: chickens, flowers, coop, well, vegetable garden, mailbox,
+wheelbarrow. West: pumpkin patch, corn field with scarecrow, pig pen with
+mud. Center: red gambrel barn, silo, tractor, hay bales, trough, sunflower
+row. East: duck pond, apple orchard, beehives, tethered hot-air balloon.
+North: farmhouse, windmill, cow and sheep paddock. Border trees.
+
+PLAYTEST (automated, by Claude)
+-------------------------------
+A bot played the full map in a phone-sized headless browser: reached
+Size 9 and cleared all cubes; win screen appears. No stuck debris.
+Not yet measured: real frame rate on the S20.
+
+PHASE 2 CANDIDATES
+------------------
+- Mixed cube sizes (2x, 4x) that need a bigger hole; they wobble at the
+  rim until then. The ring then shows when big blocks unlock.
+- More maps (Todd: no repeated cities; farm, underwater, etc.).
+- Tuning from Todd's device notes (speed, zoom, ring, colors).
+- Optional hosting setup for the home-screen version.
+
+FILES
+-----
+src/: builder.js (shared voxel tools + big-block merging), palette.js,
+farm.js, reef.js, main.js, index.html. build.mjs bundles everything into
+one index.html plus manifest, sw.js and icons in dist/.
+
+PHASE 1.1 CHANGES (after Todd's first laptop play)
+--------------------------------------------------
+- Controls are now a joystick: press anywhere and pull; the hole keeps
+  moving that way while held, faster the farther you pull. A faint ring
+  and dot show the stick. No more "invisible wall" at the window edge
+  (old drag only moved as far as the mouse could travel in the window).
+- Zoom is set by the screen's shorter side, so laptop and phone match.
+- View width (short side) = 16 cubes + hole diameter / 0.22: much more of
+  the farm visible at Size 1, and a clear step out at every size-up.
+- Hole starts at (0, 40), a bit further from the board's near edge.
+
+PHASE 2 CHANGES
+---------------
+Big blocks
+- Maps now mix 1x, 2x and 4x cubes. Big blocks are merged from solid,
+  mostly one-colour areas the map marks as "chunky".
+- 2x blocks can be swallowed from Size 2, 4x blocks from Size 4.
+- Until then a big block wobbles at the rim and a hint says which size
+  you need. A toast announces each unlock; the line under the counters
+  shows the next unlock ("2x blocks at Size 2").
+- Counters and % cleared count unit cubes, so a 4x block is worth 64.
+- Size-up targets never ask for more than 70% of what you can already eat.
+- Farm: barn walls are 2 thick and the barn is packed with hay (4x
+  blocks); the silo is full of grain; hay bales, cows, pigs, sheep,
+  pumpkins, apple trees and the tractor have big blocks.
+
+Second map: Reef
+- Sandy floor with moving light (caustics), rising bubbles, blue water fog.
+- Start shallows: starfish, clams with pearls, urchins, sea grass, fish.
+- Coral garden: brain corals, branching corals, table corals, sea fans,
+  anemones with clownfish.
+- West: kelp forest and a sea turtle. North: shipwreck (solid hull, 4x
+  blocks), treasure chest and spilled gold, anchor, and a whale floating
+  above the wreck. East: rocky reef wall, yellow submarine, jellyfish.
+- Floating things hang in the water until the hole passes under them or
+  the piece holding them up is eaten, then they drop.
+
+Start and win screens
+- Start screen is a map picker (Farm, Reef). Cleared maps show a check.
+- Win screen shows cubes eaten and time, with "Try the <other map>" and
+  "Play again". The game remembers the last map played.
+
+Feel
+- Big blocks land with a low thump and a small camera shake (4x).
+- The rim pulses ("gulps") as you eat. Win plays a short fanfare.
+- Reef pops are higher pitched than the farm's.
+
+Phone app
+- sw.js is network-first, so a new version shows up the next time the
+  app opens online; it still works offline.
+- Hosting: GitHub Pages from Todd's public "void" repository (set up
+  Oct 31). Repo root holds the built game; src/ holds the source.
+
+PLAYTEST (automated, Phase 2)
+- Bot cleared Farm (17,333 cubes) and Reef (11,137 cubes) at phone size
+  with no errors; reached Size 9 on both.

@@ -1,0 +1,66 @@
+// Soft farm palette. Each colour belongs to a group used by the HUD counters.
+export const GROUPS = {
+  red:    { label: 'Red',    swatch: '#e0605a' },
+  green:  { label: 'Green',  swatch: '#6cbf5b' },
+  yellow: { label: 'Yellow', swatch: '#f2cf6b' },
+  white:  { label: 'White',  swatch: '#f4efe6' },
+  brown:  { label: 'Brown',  swatch: '#b98552' },
+  orange: { label: 'Orange', swatch: '#f39a3d' },
+  blue:   { label: 'Blue',   swatch: '#6ec6e8' },
+  pink:   { label: 'Pink',   swatch: '#f4a7b0' },
+  gray:   { label: 'Gray',   swatch: '#8d8e95' },
+  purple: { label: 'Purple', swatch: '#b48ef0' },
+  sand:   { label: 'Sand',   swatch: '#ecd9a0' },
+};
+
+const P = [
+  // name, hex, group
+  ['red', '#e0605a', 'red'], ['redDark', '#c94f4a', 'red'], ['apple', '#e2504b', 'red'],
+  ['comb', '#e8564f', 'red'], ['brick', '#c7745b', 'red'], ['balloonRed', '#f26b6b', 'red'],
+  ['roofBarn', '#8c5a52', 'brown'],
+  ['trim', '#f4efe6', 'white'], ['cream', '#f3e6c4', 'white'], ['chicken', '#fbfaf6', 'white'],
+  ['cowWhite', '#f7f5f0', 'white'], ['wool', '#f2ede1', 'white'], ['wool2', '#e9e2d2', 'white'],
+  ['houseWall', '#f6f0e2', 'white'], ['siloBand', '#eef2f5', 'white'], ['blade', '#f7f3ea', 'white'],
+  ['wood', '#b98552', 'brown'], ['woodDark', '#8a5f3c', 'brown'], ['trunk', '#9a6b45', 'brown'],
+  ['soil', '#9b6f4a', 'brown'], ['mud', '#8b6a4f', 'brown'], ['seedHead', '#6b4a2b', 'brown'],
+  ['rope', '#d9c6a0', 'brown'], ['basket', '#b07a48', 'brown'], ['hat', '#7a5536', 'brown'],
+  ['leaf', '#6cbf5b', 'green'], ['leaf2', '#58a84e', 'green'], ['leafDark', '#4b9145', 'green'],
+  ['pine', '#3f8f5a', 'green'], ['pine2', '#4fa266', 'green'],
+  ['stem', '#5e9a3a', 'green'], ['stalk', '#8dc85a', 'green'], ['lily', '#5fb85a', 'green'],
+  ['cabbage', '#9bd67a', 'green'], ['carrotLeaf', '#6dc35a', 'green'], ['tractor', '#5bb36a', 'green'],
+  ['balloonGreen', '#8be09b', 'green'], ['reed', '#7fb85a', 'green'],
+  ['hay', '#f2cf6b', 'yellow'], ['hayDark', '#ddb04f', 'yellow'], ['cob', '#f6d55c', 'yellow'],
+  ['petal', '#ffd23f', 'yellow'], ['duck', '#ffe066', 'yellow'], ['tractorYellow', '#f7c948', 'yellow'],
+  ['balloonYellow', '#ffd166', 'yellow'], ['beeBox', '#ffe9a8', 'yellow'], ['straw', '#e9c56a', 'yellow'],
+  ['pumpkin', '#f39a3d', 'orange'], ['pumpkinDark', '#e07f2c', 'orange'], ['carrot', '#f08a3c', 'orange'],
+  ['beak', '#f59b42', 'orange'],
+  ['water', '#6ec6e8', 'blue'], ['waterLight', '#9adcf2', 'blue'], ['roofBlue', '#6f8fb8', 'blue'],
+  ['window', '#9fd3ef', 'blue'], ['silo', '#b9c9d6', 'blue'], ['balloonBlue', '#6ec6e8', 'blue'],
+  ['shirt', '#6f9fd8', 'blue'],
+  ['pink', '#f4a7b0', 'pink'], ['pinkDark', '#e88c98', 'pink'], ['flowerPink', '#f49ac1', 'pink'],
+  ['flowerPurple', '#b48ef0', 'pink'],
+  ['stone', '#a9aab0', 'gray'], ['stoneDark', '#8d8e95', 'gray'], ['tire', '#3a3a3e', 'gray'],
+  ['cowBlack', '#3d3a3a', 'gray'], ['sheepFace', '#5a5452', 'gray'], ['dome', '#d5dde3', 'gray'],
+  ['metal', '#9aa4ad', 'gray'],
+  ['grain', '#e3c27a', 'yellow'],
+  // reef
+  ['coralPink', '#ff8f8f', 'pink'], ['coralRose', '#f7a1c4', 'pink'], ['anemone', '#f6b3dc', 'pink'],
+  ['coralOrange', '#ff9f5a', 'orange'], ['clown', '#ff8a3d', 'orange'], ['starfish', '#ff7a59', 'orange'],
+  ['coralPurple', '#b48ef0', 'purple'], ['fan', '#a07ce6', 'purple'], ['urchin', '#5e4f8f', 'purple'],
+  ['jelly', '#d9b8f7', 'purple'],
+  ['kelp', '#4fae6a', 'green'], ['kelp2', '#3c9a5c', 'green'], ['seaGrass', '#7fc46a', 'green'],
+  ['turtleShell', '#5f9e5a', 'green'], ['turtleSkin', '#a6cf7a', 'green'], ['brainCoral', '#c7d97a', 'green'],
+  ['fishBlue', '#5aa9e6', 'blue'], ['whale', '#5b7fa8', 'blue'], ['whaleDark', '#4a6a92', 'blue'],
+  ['subWindow', '#9fd3ef', 'blue'],
+  ['fishYellow', '#ffd84d', 'yellow'], ['gold', '#ffcf40', 'yellow'], ['sub', '#ffd23f', 'yellow'],
+  ['brass', '#e0b350', 'yellow'],
+  ['shipWood', '#a8754a', 'brown'], ['shipDark', '#7b5233', 'brown'], ['chest', '#8a5a35', 'brown'],
+  ['rock', '#8f9aa6', 'gray'], ['rock2', '#7a8591', 'gray'], ['anchor', '#5d636b', 'gray'],
+  ['whaleBelly', '#e3ebf2', 'white'], ['clam', '#efe2d2', 'white'], ['pearl', '#fffaf0', 'white'],
+  ['sail2', '#efe7d6', 'white'], ['fishWhite', '#f7f7f2', 'white'],
+  ['sandLight', '#f3e4b5', 'sand'], ['sandDark', '#dcc58c', 'sand'],
+];
+
+export const COLORS = P.map(([name, hex, group]) => ({ name, hex, group }));
+export const C = {};
+COLORS.forEach((c, i) => (C[c.name] = i));

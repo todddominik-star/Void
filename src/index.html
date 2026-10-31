@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#cfe9f7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<title>Void</title>
+<style>
+  :root { --ink: #2c3550; --tile: #5d6fcf; --tile-hi: #7c8de6; --tile-lo: #4656ad; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(#bfe3f6, #dff1fb 60%, #cfe9f7); touch-action: none; user-select: none; -webkit-user-select: none;
+    font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI", system-ui, sans-serif; }
+  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #hud { position: fixed; top: calc(env(safe-area-inset-top) + 12px); left: 12px; display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; max-width: 75vw; pointer-events: none; }
+  .tile { width: 64px; padding: 8px 0 6px; border-radius: 14px; background: linear-gradient(var(--tile-hi), var(--tile) 40%, var(--tile-lo)); box-shadow: 0 3px 0 #3a4796, 0 6px 14px rgba(40,50,110,.25); text-align: center; color: #fff; }
+  .tile b { display: block; font-size: 17px; font-weight: 800; letter-spacing: .2px; text-shadow: 0 2px 0 rgba(30,36,90,.55); margin-top: 4px; }
+  .cube { position: relative; width: 26px; height: 28px; margin: 0 auto; }
+  .cube i { position: absolute; display: block; }
+  .cube .t { width: 18.4px; height: 18.4px; left: 3.8px; top: -1px; transform: rotate(45deg) skew(-8deg,-8deg) scale(.82,.82); transform-origin: center; border-radius: 3px; }
+  .cube .t { transform: translateY(2px) scaleY(.58) rotate(45deg); border-radius: 3px; }
+  .cube .l { left: 0; top: 8px; width: 13px; height: 17px; transform: skewY(30deg); border-radius: 2px 0 2px 3px; }
+  .cube .r { right: 0; top: 8px; width: 13px; height: 17px; transform: skewY(-30deg); border-radius: 0 2px 3px 2px; }
+  .total { width: 100%; color: var(--ink); opacity: .7; font-size: 12px; font-weight: 700; padding-left: 2px; }
+  #size { position: fixed; left: 0; top: 0; pointer-events: none; will-change: transform; }
+  #size span { display: inline-block; font-weight: 900; font-size: 17px; color: #ff9b3d; -webkit-text-stroke: 4px #fff; paint-order: stroke fill; letter-spacing: .3px; }
+  #size.bump span { animation: bump .7s ease-out; }
+  @keyframes bump { 0% { transform: scale(1); } 30% { transform: scale(1.5); } 100% { transform: scale(1); } }
+  .btns { position: fixed; top: calc(env(safe-area-inset-top) + 12px); right: 12px; display: flex; gap: 8px; }
+  .btn { width: 40px; height: 40px; border-radius: 12px; border: 0; background: rgba(255,255,255,.55); backdrop-filter: blur(6px); display: grid; place-items: center; color: var(--ink); padding: 0; }
+  .btn svg { width: 20px; height: 20px; }
+  #mute .x { display: none; } #mute.off .x { display: inline; } #mute.off .w { display: none; }
+  #hint { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 13%); transform: translateX(-50%); color: var(--ink); background: rgba(255,255,255,.6); padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 14px; pointer-events: none; transition: opacity .8s; }
+  #arrow { position: fixed; left: 0; top: 0; width: 34px; height: 34px; pointer-events: none; transition: opacity .4s; }
+  #arrow svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 3px rgba(0,0,0,.2)); animation: nudge 1.2s ease-in-out infinite; }
+  @keyframes nudge { 50% { transform: translateX(5px); } }
+  #stick { position: fixed; width: 0; height: 0; pointer-events: none; transition: opacity .25s; }
+  #stick::before { content: ""; position: absolute; left: calc(-1 * var(--r, 46px)); top: calc(-1 * var(--r, 46px)); width: calc(2 * var(--r, 46px)); height: calc(2 * var(--r, 46px)); border-radius: 50%; border: 2px solid rgba(255,255,255,.75); background: rgba(255,255,255,.12); }
+  #stick i { position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 2px 6px rgba(40,50,90,.25); }
+  .gone { opacity: 0 !important; pointer-events: none !important; }
+  .screen { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(214,236,248,.55); backdrop-filter: blur(5px); transition: opacity .6s; text-align: center; color: var(--ink); }
+  .screen h1 { font-size: 64px; margin: 0; letter-spacing: 10px; font-weight: 900; color: #2a2f45; text-shadow: 0 4px 0 rgba(255,255,255,.7); }
+  .screen p { margin: 6px 0 30px; font-size: 16px; font-weight: 600; opacity: .75; }
+  .pill { display: inline-block; padding: 14px 34px; border-radius: 99px; background: #2a2f45; color: #fff; font-weight: 800; font-size: 18px; border: 0; box-shadow: 0 6px 16px rgba(30,40,80,.25); font-family: inherit; }
+  .hole-ic { width: 120px; height: 46px; border-radius: 50%; background: radial-gradient(#05060a 55%, #1b1e2c 70%); margin: 0 auto 26px; box-shadow: 0 0 0 4px #fbf6ea, 0 0 0 7px rgba(255,173,66,.0); }
+  .panel { padding-inline: max(16px, env(safe-area-inset-left)); max-width: 460px; }
+  .screen h1.small { font-size: 40px; letter-spacing: 4px; }
+  #cards { display: grid; gap: 12px; width: min(340px, 86vw); margin: 0 auto; }
+  .card { display: grid; grid-template-columns: 64px 1fr; grid-template-rows: auto auto; column-gap: 14px; align-items: center; text-align: left; padding: 12px 16px 12px 12px; border: 0; border-radius: 18px; background: rgba(255,255,255,.82); box-shadow: 0 6px 18px rgba(30,40,80,.14); font-family: inherit; color: var(--ink); cursor: pointer; transition: transform .15s; }
+  .card:active { transform: scale(.97); }
+  .card:focus-visible, .pill:focus-visible { outline: 3px solid #ff9b3d; outline-offset: 3px; }
+  .card .art { grid-row: 1 / 3; width: 64px; height: 64px; border-radius: 14px; position: relative; overflow: hidden; }
+  .card .name { font-size: 20px; font-weight: 900; letter-spacing: .5px; }
+  .card .tag { font-size: 13px; font-weight: 600; opacity: .7; }
+  .card-farm .art { background: linear-gradient(#bfe3f6 0 38%, #9fd47c 38%); }
+  .card-farm .art::before { content: ""; position: absolute; left: 12px; top: 16px; width: 24px; height: 22px; background: #e0605a; box-shadow: 0 -8px 0 -2px #8c5a52, 26px 4px 0 -6px #f2cf6b, 30px 12px 0 -6px #f2cf6b; border-radius: 3px; }
+  .card-farm .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea; }
+  .card-reef .art { background: linear-gradient(#5fb7d6 0 45%, #ecd9a0 45%); }
+  .card-reef .art::before { content: ""; position: absolute; left: 10px; top: 14px; width: 8px; height: 20px; background: #ff8f8f; box-shadow: 10px 6px 0 #b48ef0, 20px -2px 0 #ff9f5a, 32px 8px 0 #4fae6a, 22px -10px 0 -2px #ffd84d; border-radius: 3px; }
+  .card-reef .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea; }
+  .stats { font-size: 14px; font-weight: 800; opacity: .7; margin: -18px 0 26px; font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .pill.ghost { background: rgba(255,255,255,.8); color: #2a2f45; }
+  #toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 118px); transform: translateX(-50%); padding: 9px 18px; border-radius: 99px; background: rgba(42,47,69,.86); color: #fff; font-weight: 800; font-size: 14px; pointer-events: none; transition: opacity .4s; white-space: nowrap; }
+  #toast.good { background: #ff9b3d; }
+  @media (prefers-reduced-motion: reduce) { #arrow svg, #size.bump span { animation: none; } }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud"></div>
+<div id="size"><span>Size 1</span></div>
+<div class="btns">
+  <button class="btn" id="mute" aria-label="Sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path class="w" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/><path class="x" d="m16 9 6 6m0-6-6 6"/></svg></button>
+  <button class="btn" id="fs" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
+<div id="stick" class="gone"><i></i></div>
+<div id="hint">Press and pull to move the hole</div>
+<div id="arrow" class="gone"><svg viewBox="0 0 24 24"><path d="M4 12h13M12 6l7 6-7 6" fill="none" stroke="#ff9b3d" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div id="toast" class="gone"></div>
+<div class="screen" id="start"><div class="panel">
+  <div class="hole-ic"></div>
+  <h1>VOID</h1>
+  <p>Pick a place to swallow.</p>
+  <div id="cards"></div>
+</div></div>
+<div class="screen gone" id="win"><div class="panel">
+  <div class="hole-ic"></div>
+  <h1 class="small" id="win-title">All clear</h1>
+  <p id="win-text"></p>
+  <div class="stats" id="win-stats"></div>
+  <div class="row">
+    <button class="pill" id="next">Try the Reef</button>
+    <button class="pill ghost" id="again">Play again</button>
+  </div>
+</div></div>
+<script>/*BUNDLE*/</script>
+</body>
+</html>
