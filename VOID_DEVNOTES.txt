@@ -138,3 +138,10 @@ PHASE 2.1 FIXES (Todd's phone play, Oct 31)
 - When 80 or fewer pieces are left, a bobbing orange marker floats over
   each one (plus the edge arrow), so the last cubes are easy to find.
 - Reef: the low-contrast sand-coloured cubes became bright little shells.
+
+NEXT SESSION LIST (Todd, Oct 31)
+--------------------------------
+- Save progress mid-map, so a fully closed app resumes the same map
+  where it left off (eaten cubes, size, hole position).
+- A quit / menu button on the game screen to end a run and return to
+  the map picker.
