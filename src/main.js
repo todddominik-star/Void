@@ -147,6 +147,30 @@ function resetBubble(b, anywhere) {
   b.s = 0.5 + Math.random() * 1.1; b.v = 1.2 + Math.random() * 1.6;
 }
 
+// ------------------------------------------------------------------ beacons over the last few pieces
+const BEACONS = 80;
+const beaconMesh = new THREE.InstancedMesh(
+  new THREE.OctahedronGeometry(0.42, 0),
+  new THREE.MeshBasicMaterial({ color: '#ff9b3d', fog: false }), BEACONS);
+beaconMesh.frustumCulled = false; beaconMesh.count = 0;
+scene.add(beaconMesh);
+function updateBeacons(t) {
+  if (!playing || remainingPieces > BEACONS) { beaconMesh.count = 0; return; }
+  let c = 0;
+  const s = Math.max(0.7, camDist / 48);
+  for (let n = 0; n < N && c < BEACONS; n++) {
+    if (state[n] === 3 || state[n] === 1) continue; // only pieces still waiting on the board
+    if (Math.hypot(cx[n] - hole.x, cz[n] - hole.z) < hole.r) continue;
+    const top = cy[n] + sz[n] / 2;
+    mtx.makeRotationY(t * 2 + n);
+    mtx.scale(scl.set(s, s * 1.4, s));
+    mtx.setPosition(cx[n], top + 1.2 * s + Math.sin(t * 3 + n) * 0.35 * s, cz[n]);
+    beaconMesh.setMatrixAt(c++, mtx);
+  }
+  beaconMesh.count = c;
+  beaconMesh.instanceMatrix.needsUpdate = true;
+}
+
 // ------------------------------------------------------------------ cubes
 function chamferedCube(c = 0.1) {
   const a = 0.5 - c, b = 0.5, pts = [];
@@ -180,7 +204,7 @@ const inGrid = (i, j, k) => i >= -GO && i < GO && j >= -GO && j < GO && k >= 0 &
 
 // per-world state
 let world = FARM, N = 0;
-let cx, cy, cz, vx, vy, vz, rx, ry, rz, wx, wy, wz, gi, gj, gk, sz, colR, colG, colB, colIdx, state, visitStamp, scanStamp, baseMatrixDirty;
+let captured, cx, cy, cz, vx, vy, vz, rx, ry, rz, wx, wy, wz, gi, gj, gk, sz, colR, colG, colB, colIdx, state, visitStamp, scanStamp, baseMatrixDirty;
 let staticMesh = null;
 let totalVol = 0, eatenVol = 0, remainingPieces = 0, thresholds = [];
 const groupRemaining = {};
@@ -216,6 +240,7 @@ function loadWorld(id) {
   cx = F(); cy = F(); cz = F(); vx = F(); vy = F(); vz = F(); rx = F(); ry = F(); rz = F(); wx = F(); wy = F(); wz = F();
   colR = F(); colG = F(); colB = F();
   gi = new Int16Array(N); gj = new Int16Array(N); gk = new Int16Array(N);
+  captured = new Uint8Array(N);
   sz = new Uint8Array(N); colIdx = new Uint8Array(N); state = new Uint8Array(N);
   visitStamp = new Int32Array(N); scanStamp = new Int32Array(N);
   occ.fill(0);
@@ -256,7 +281,7 @@ function loadWorld(id) {
   staticDirtyMin = Infinity; staticDirtyMax = -1;
 
   // reset the hole
-  hole.x = world.start.x; hole.z = world.start.z;
+  hole.x = world.start.x; hole.z = world.start.z; prevHX = hole.x; prevHZ = hole.z;
   hole.level = 0; hole.r = hole.rTarget = RADII[0];
   shownProgress = 0; builtProgress = -1; flashT = 0;
   won = false; playing = false; nextUnlockToast = 0;
@@ -288,6 +313,7 @@ function release(n, inward) {
   wobble.delete(n);
   hideStatic(n);
   state[n] = 1;
+  captured[n] = inward ? 1 : 0;
   const dx = hole.x - cx[n], dz = hole.z - cz[n], d = Math.hypot(dx, dz) || 1;
   const s = inward ? 1.2 + Math.random() * 1.2 : 0.4;
   vx[n] = (dx / d) * s + (Math.random() - 0.5) * 0.8;
@@ -440,6 +466,7 @@ function physics(dt) {
     }
     if (state[n] === 1) {
       vy[n] -= GRAVITY * dt;
+      if (captured[n]) { x += holeDX; z += holeDZ; } // swallowed pieces follow a moving hole
       const bottom = y - h;
       if (bottom < -0.2 && d < r + 0.2) {
         vx[n] += ux * 8 * dt; vz[n] += uz * 8 * dt;
@@ -471,7 +498,7 @@ function physics(dt) {
             if (s > 1 && vy[n] < -9) shake = Math.min(1, shake + 0.12 * s);
             vy[n] *= -0.22; vx[n] *= 0.6; vz[n] *= 0.6; wx[n] *= 0.5; wz[n] *= 0.5;
           } else {
-            state[n] = 2; vx[n] = vy[n] = vz[n] = 0;
+            state[n] = 2; captured[n] = 0; vx[n] = vy[n] = vz[n] = 0;
             rx[n] = Math.round(rx[n] / (Math.PI / 2)) * (Math.PI / 2);
             rz[n] = Math.round(rz[n] / (Math.PI / 2)) * (Math.PI / 2);
           }
@@ -509,6 +536,7 @@ function levelProgress() {
   const lo = hole.level === 0 ? 0 : thresholds[hole.level - 1];
   return Math.min(1, (eatenVol - lo) / (thresholds[hole.level] - lo));
 }
+let holeDX = 0, holeDZ = 0, prevHX = 0, prevHZ = 0;
 let popBudget = 0, gulp = 0, shake = 0, flashT = 0, nextUnlockToast = 0;
 function onEat(v, s) {
   gulp = Math.min(1, gulp + (s > 1 ? 0.35 * s / 2 : 0.05));
@@ -584,13 +612,14 @@ function applyStick(dt) {
   knob.style.transform = len > 0 ? `translate(${(dx / len) * kl}px, ${(dy / len) * kl}px)` : '';
   if (len < 4) return;
   const f = Math.min(1, (len - 4) / (R - 4));
-  const speed = (viewShort * 0.55 + 4) * f * f * (3 - 2 * f) * dt;
+  const speed = (viewShort * 0.3 + 2.5) * f * f * (3 - 2 * f) * dt;
   hole.x += (dx / len) * speed;
   hole.z += (dy / len) * speed;
   clampHole();
 }
 function clampHole() {
-  const lim = world.half - Math.min(hole.r * 0.6, 4);
+  // the whole hole stays on the board (board edge is at about ±62)
+  const lim = Math.min(world.half + 1, 61.5 - hole.r - 0.4);
   hole.x = Math.max(-lim, Math.min(lim, hole.x));
   hole.z = Math.max(-lim, Math.min(lim, hole.z));
 }
@@ -674,7 +703,7 @@ function updateOverlay() {
   v3.set(hole.x, 0, hole.z + hole.r * 1.32).project(camera);
   sizeEl.style.transform = `translate(${(v3.x * 0.5 + 0.5) * window.innerWidth}px, ${(-v3.y * 0.5 + 0.5) * window.innerHeight}px) translate(-50%, 0)`;
   sizeEl.firstChild.textContent = `Size ${hole.level + 1}`;
-  if (playing && remainingPieces > 0 && remainingPieces <= 40) {
+  if (playing && remainingPieces > 0 && remainingPieces <= BEACONS) {
     let best = -1, bd = Infinity;
     for (let n = 0; n < N; n++) {
       if (state[n] === 3) continue;
@@ -782,11 +811,13 @@ function frame(now) {
   lockedToastT -= dt;
   if (playing) {
     applyStick(dt);
-    const sp = viewShort * 0.55 * dt;
+    const sp = (viewShort * 0.3 + 2.5) * dt;
     if (keys.ArrowLeft || keys.a) hole.x -= sp; if (keys.ArrowRight || keys.d) hole.x += sp;
     if (keys.ArrowUp || keys.w) hole.z -= sp; if (keys.ArrowDown || keys.s) hole.z += sp;
     clampHole();
   }
+  holeDX = hole.x - prevHX; holeDZ = hole.z - prevHZ; prevHX = hole.x; prevHZ = hole.z;
+  if (Math.abs(holeDX) > 3 || Math.abs(holeDZ) > 3) holeDX = holeDZ = 0; // map change
   hole.r += (hole.rTarget - hole.r) * (1 - Math.exp(-dt * 3));
   holeUniform.value.set(hole.x, hole.z, hole.r);
   holeGroup.position.set(hole.x, 0, hole.z);
@@ -799,6 +830,7 @@ function frame(now) {
   supportCheck();
   physics(dt);
   updateWobble(dt, t);
+  updateBeacons(t);
   shownProgress += (levelProgress() - shownProgress) * (1 - Math.exp(-dt * 6));
   if (flashT > 0) { flashT = Math.max(0, flashT - dt * 1.4); shownProgress = flashT > 0.5 ? 1 : shownProgress * (flashT > 0 ? 0.5 : 1); }
   setRingProgress(flashT > 0.5 ? 1 : shownProgress);

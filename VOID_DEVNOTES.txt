@@ -127,3 +127,14 @@ Phone app
 PLAYTEST (automated, Phase 2)
 - Bot cleared Farm (17,333 cubes) and Reef (11,137 cubes) at phone size
   with no errors; reached Size 9 on both.
+
+PHASE 2.1 FIXES (Todd's phone play, Oct 31)
+-------------------------------------------
+- Hole always stays fully on the board, so its tube no longer pokes out
+  past the edge and the edge no longer draws across the hole.
+- Joystick top speed is about 45% slower (Todd found it too fast).
+- Swallowed cubes now ride along with the hole while they fall, so a
+  fast-moving hole no longer leaves them behind on the ground.
+- When 80 or fewer pieces are left, a bobbing orange marker floats over
+  each one (plus the edge arrow), so the last cubes are easy to find.
+- Reef: the low-contrast sand-coloured cubes became bright little shells.

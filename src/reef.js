@@ -187,11 +187,11 @@ export function buildReef() {
   };
 
   // ---------- layout (camera looks north, from +z) ----------
-  // sandy ripples so the floor reads as sand from far away
+  // little shells scattered on the sand (bright, so they're easy to spot)
   for (let n = 0; n < 220; n++) {
     const x = Math.round((rnd() - 0.5) * 112), z = Math.round((rnd() - 0.5) * 112);
     if (Math.hypot(x - START.x, z - START.z) < 4) continue;
-    set(x, 0, z, rnd() < 0.5 ? C.sandLight : C.sandDark);
+    set(x, 0, z, [C.clam, C.coralRose, C.starfish, C.pearl][Math.floor(rnd() * 4)]); // little shells
   }
   // starting shallows: small, friendly pieces
   [[-6, 34], [7, 36], [12, 46], [-12, 48], [-2, 52], [16, 52]].forEach(([a, b]) => starfish(a, b));
