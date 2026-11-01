@@ -61,9 +61,22 @@
   .card-reef .art { background: linear-gradient(#5fb7d6 0 45%, #ecd9a0 45%); }
   .card-reef .art::before { content: ""; position: absolute; left: 10px; top: 14px; width: 8px; height: 20px; background: #ff8f8f; box-shadow: 10px 6px 0 #b48ef0, 20px -2px 0 #ff9f5a, 32px 8px 0 #4fae6a, 22px -10px 0 -2px #ffd84d; border-radius: 3px; }
   .card-reef .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea; }
+  .card-valley .art { background: linear-gradient(#cfe9f7 0 30%, #8fcf6b 30%); }
+  .card-valley .art::before { content: ""; position: absolute; left: 6px; top: 10px; width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-bottom: 20px solid #7f838c; filter: drop-shadow(22px 4px 0 #6e727b); }
+  .card-valley .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea, -8px -14px 0 -2px #3f8f5a, 30px -16px 0 -2px #3f8f5a; }
   .stats { font-size: 14px; font-weight: 800; opacity: .7; margin: -18px 0 26px; font-variant-numeric: tabular-nums; }
   .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .pill.ghost { background: rgba(255,255,255,.8); color: #2a2f45; }
+  .card-wrap { display: grid; gap: 4px; }
+  .card .tag.resume { color: #c76a12; opacity: 1; font-weight: 800; }
+  .restart { justify-self: end; border: 0; background: none; color: var(--ink); opacity: .65; font: 700 13px/1 inherit; font-family: inherit; padding: 6px 8px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .note { font-size: 13px !important; margin: 18px 0 0 !important; opacity: .6 !important; }
+  .tile b.long { font-size: 14px; }
+  @media (max-width: 400px) {
+    .tile { width: 58px; }
+    .btns { gap: 6px; }
+    .btn { width: 36px; height: 36px; border-radius: 11px; }
+  }
   #toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 118px); transform: translateX(-50%); padding: 9px 18px; border-radius: 99px; background: rgba(42,47,69,.86); color: #fff; font-weight: 800; font-size: 14px; pointer-events: none; transition: opacity .4s; white-space: nowrap; }
   #toast.good { background: #ff9b3d; }
   @media (prefers-reduced-motion: reduce) { #arrow svg, #size.bump span { animation: none; } }
@@ -74,6 +87,7 @@
 <div id="hud"></div>
 <div id="size"><span>Size 1</span></div>
 <div class="btns">
+  <button class="btn" id="menu" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></button>
   <button class="btn" id="mute" aria-label="Sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path class="w" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/><path class="x" d="m16 9 6 6m0-6-6 6"/></svg></button>
   <button class="btn" id="fs" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
 </div>
@@ -86,6 +100,15 @@
   <h1>VOID</h1>
   <p>Pick a place to swallow.</p>
   <div id="cards"></div>
+</div></div>
+<div class="screen gone" id="pause"><div class="panel">
+  <h1 class="small">Paused</h1>
+  <p id="pause-stats"></p>
+  <div class="row">
+    <button class="pill" id="resume">Keep playing</button>
+    <button class="pill ghost" id="tomaps">Back to maps</button>
+  </div>
+  <p class="note">Your progress on this map is saved.</p>
 </div></div>
 <div class="screen gone" id="win"><div class="panel">
   <div class="hole-ic"></div>

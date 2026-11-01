@@ -4,16 +4,17 @@ import { COLORS, GROUPS } from './palette.js';
 import { GRID_HALF, GRID_K } from './builder.js';
 import { FARM } from './farm.js';
 import { REEF } from './reef.js';
+import { VALLEY } from './valley.js';
 
-const MAPS = { farm: FARM, reef: REEF };
-const MAP_ORDER = ['farm', 'reef'];
+const MAPS = { farm: FARM, reef: REEF, valley: VALLEY };
+const MAP_ORDER = ['farm', 'reef', 'valley'];
 
 // ------------------------------------------------------------------ tuning
 const RADII = [1.6, 2.1, 2.7, 3.4, 4.2, 5.2, 6.4, 7.8, 9.4]; // hole radius per size
 const LEVEL_FRACTIONS = [0.012, 0.035, 0.07, 0.13, 0.21, 0.32, 0.46, 0.64]; // share of the map to reach the next size
 const UNLOCK = { 1: 0, 2: 1, 4: 3 };  // block size -> level index where it can be swallowed (Size 1, 2, 4)
-const SCREEN_HOLE_SHARE = 0.22;      // hole diameter as a share of the screen's short side
-const VIEW_BASE = 16;                // extra cubes of view beyond the hole share
+const VIEW_BASE = 24;                // cubes across the screen's short side before the hole is counted
+const VIEW_PER_HOLE = 2.2;           // extra view per cube of hole diameter (was 4.5: zoomed out too far)
 const PITCH = THREE.MathUtils.degToRad(48);
 const GRAVITY = 32;
 const DYN_MAX = 9000;
@@ -81,7 +82,7 @@ ground.receiveShadow = true;
 scene.add(ground);
 const skirtMat = new THREE.MeshLambertMaterial({ color: '#7fbc63' });
 {
-  const h = 6;
+  const h = 40; // much deeper than the hole (12), so its tube is always hidden
   const mk = (w, d, x, z) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), skirtMat); b.position.set(x - 0.5, -h / 2 - 0.01, z - 0.5); scene.add(b); };
   mk(BOARD, 1, 0, BOARD / 2 - 0.5); mk(BOARD, 1, 0, -BOARD / 2 + 0.5);
   mk(1, BOARD, BOARD / 2 - 0.5, 0); mk(1, BOARD, -BOARD / 2 + 0.5, 0);
@@ -107,27 +108,44 @@ scene.add(holeGroup);
   floor.rotation.x = -Math.PI / 2; floor.position.y = -depth + 0.01;
   holeGroup.add(wall, floor);
 }
-// rim + thin progress ring
+// rim (scales with the hole)
 const ringGroup = new THREE.Group();
 holeGroup.add(ringGroup);
 const rimMat = new THREE.MeshBasicMaterial({ color: '#fbf6ea', transparent: true, opacity: 0.9, depthWrite: false, fog: false });
 const rim = new THREE.Mesh(new THREE.RingGeometry(1.0, 1.035, 96), rimMat);
 rim.rotation.x = -Math.PI / 2; rim.position.y = 0.015;
-const trackMat = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.32, depthWrite: false, fog: false });
-const RING_IN = 1.14, RING_OUT = 1.165;
-const track = new THREE.Mesh(new THREE.RingGeometry(RING_IN, RING_OUT, 128), trackMat);
-track.rotation.x = -Math.PI / 2; track.position.y = 0.02;
-const fillMat = new THREE.MeshBasicMaterial({ color: '#ffad42', transparent: true, opacity: 1, depthWrite: false, fog: false });
-const fill = new THREE.Mesh(new THREE.RingGeometry(RING_IN - 0.006, RING_OUT + 0.006, 128, 1, Math.PI / 2, 0.001), fillMat);
-fill.rotation.x = -Math.PI / 2; fill.position.y = 0.025;
-ringGroup.add(rim, track, fill);
-let shownProgress = 0, builtProgress = -1;
-function setRingProgress(p) {
+ringGroup.add(rim);
+
+// progress ring: drawn a fixed number of screen pixels wide just outside the hole, at every size
+const progGroup = new THREE.Group();
+scene.add(progGroup);
+const ringMat = (color, opacity, order) => {
+  const m = new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, depthTest: false, fog: false });
+  return m;
+};
+const outlineMat = ringMat('#2a2f45', 0.28), trackMat = ringMat('#ffffff', 0.55), fillMat = ringMat('#ffc83d', 1);
+const outline = new THREE.Mesh(new THREE.BufferGeometry(), outlineMat);
+const track = new THREE.Mesh(new THREE.BufferGeometry(), trackMat);
+const fill = new THREE.Mesh(new THREE.BufferGeometry(), fillMat);
+[outline, track, fill].forEach((m, i) => { m.rotation.x = -Math.PI / 2; m.position.y = 0.03; m.renderOrder = 10 + i; progGroup.add(m); });
+const RING_PX = 3, GAP_PX = 5, EDGE_PX = 1.2;
+let shownProgress = 0, builtProgress = -1, ringKey = '';
+function updateRing(p) {
+  // world units per screen pixel around the hole
+  const px = viewShort / Math.min(window.innerWidth, window.innerHeight);
+  const inner = hole.r * (1 + gulp * 0.05) + GAP_PX * px, outer = inner + RING_PX * px;
+  const key = `${inner.toFixed(3)}|${outer.toFixed(3)}`;
+  if (key !== ringKey) {
+    ringKey = key; builtProgress = -1;
+    outline.geometry.dispose(); outline.geometry = new THREE.RingGeometry(inner - EDGE_PX * px, outer + EDGE_PX * px, 160);
+    track.geometry.dispose(); track.geometry = new THREE.RingGeometry(inner, outer, 160);
+    progGroup.userData.inner = inner; progGroup.userData.outer = outer;
+  }
   if (Math.abs(p - builtProgress) < 0.002) return;
   builtProgress = p;
   const len = Math.max(0.001, p * Math.PI * 2);
   fill.geometry.dispose();
-  fill.geometry = new THREE.RingGeometry(RING_IN - 0.006, RING_OUT + 0.006, 128, 1, Math.PI / 2 - len, len);
+  fill.geometry = new THREE.RingGeometry(progGroup.userData.inner, progGroup.userData.outer, 160, 1, Math.PI / 2 - len, len);
 }
 
 // ------------------------------------------------------------------ bubbles (reef only)
@@ -266,7 +284,7 @@ function loadWorld(id) {
   }
   eatenVol = 0; remainingPieces = N;
   // size-up targets: a share of the whole map, but never more than what can be eaten at that size
-  thresholds = LEVEL_FRACTIONS.map((f, L) => Math.round(Math.min(f * totalVol, availVol[L] * 0.7)));
+  thresholds = (world.levels || LEVEL_FRACTIONS).map((f, L) => Math.round(Math.min(f * totalVol, availVol[L] * 0.7)));
   for (let L = 1; L < thresholds.length; L++) thresholds[L] = Math.max(thresholds[L], thresholds[L - 1] + 1);
 
   if (staticMesh) { scene.remove(staticMesh); staticMesh.dispose(); }
@@ -283,7 +301,7 @@ function loadWorld(id) {
   // reset the hole
   hole.x = world.start.x; hole.z = world.start.z; prevHX = hole.x; prevHZ = hole.z;
   hole.level = 0; hole.r = hole.rTarget = RADII[0];
-  shownProgress = 0; builtProgress = -1; flashT = 0;
+  shownProgress = 0; builtProgress = -1; ringKey = ''; flashT = 0;
   won = false; playing = false; nextUnlockToast = 0;
   updateCamera(0, true);
   bub.forEach((b) => resetBubble(b, true));
@@ -635,7 +653,7 @@ function updateCamera(dt, snap = false) {
   const vfov = THREE.MathUtils.degToRad(camera.fov);
   const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
   const shortFov = Math.min(hfov, vfov);
-  const wantShort = VIEW_BASE + (2 * hole.r) / SCREEN_HOLE_SHARE;
+  const wantShort = VIEW_BASE + 2 * hole.r * VIEW_PER_HOLE;
   const wantDist = wantShort / (2 * Math.tan(shortFov / 2));
   const k = snap ? 1 : 1 - Math.exp(-dt * 2.2);
   camDist += (wantDist - camDist) * k;
@@ -649,7 +667,7 @@ function updateCamera(dt, snap = false) {
   camera.position.set(camTarget.x + (Math.random() - 0.5) * sh, Math.sin(PITCH) * camDist + (Math.random() - 0.5) * sh, camTarget.z + Math.cos(PITCH) * camDist);
   camera.lookAt(camTarget);
   scene.fog.near = camDist * (world.id === 'reef' ? 1.2 : 1.6);
-  scene.fog.far = camDist * (world.id === 'reef' ? 3.6 : 4.5) + 40;
+  scene.fog.far = camDist * (world.id === 'reef' ? 3.6 : world.fogFar || 4.5) + 40;
   camera.far = camDist * 6 + 80; camera.updateProjectionMatrix();
   const ext = Math.max(18, camDist * 1.1);
   const sc = sun.shadow.camera;
@@ -684,6 +702,7 @@ function updateHUD() {
     cube.children[1].style.background = shade(sw, 0.86);
     cube.children[2].style.background = shade(sw, 0.7);
     el.lastChild.textContent = e[1].toLocaleString();
+    el.lastChild.classList.toggle('long', e[1] >= 10000);
   });
   const pct = totalVol ? Math.floor((eatenVol / totalVol) * 100) : 0;
   let next = '';
@@ -729,18 +748,80 @@ function updateOverlay() {
 const startEl = document.getElementById('start');
 const winEl = document.getElementById('win');
 const cardsEl = document.getElementById('cards');
-let playing = false, won = false, startTime = 0;
+let playing = false, won = false, elapsed = 0, saveT = 0;
 const cleared = () => { try { return JSON.parse(localStorage.getItem('void-cleared') || '{}'); } catch (e) { return {}; } };
+// ---- saving a map in progress (per map, in this browser only)
+const saveKey = (id) => 'void-save-' + id;
+function readSave(id) {
+  try {
+    const d = JSON.parse(localStorage.getItem(saveKey(id)) || 'null');
+    return d && d.v === 1 ? d : null;
+  } catch (e) { return null; }
+}
+function clearSave(id) { try { localStorage.removeItem(saveKey(id)); } catch (e) {} }
+function saveGame() {
+  if (won || eatenVol === 0 || !staticMesh) return;
+  const bits = new Uint8Array(Math.ceil(N / 8));
+  const loose = [];
+  for (let n = 0; n < N; n++) {
+    const gone = state[n] === 3 || (state[n] === 1 && captured[n]);
+    if (gone) bits[n >> 3] |= 1 << (n & 7);
+    else if (state[n] !== 0) loose.push(n, Math.round(cx[n] * 100) / 100, Math.round(Math.max(cy[n], sz[n] / 2) * 100) / 100, Math.round(cz[n] * 100) / 100);
+  }
+  let bin = '';
+  for (let i = 0; i < bits.length; i++) bin += String.fromCharCode(bits[i]);
+  const data = { v: 1, N, level: hole.level, x: hole.x, z: hole.z, t: elapsed, pct: Math.floor((eatenVol / totalVol) * 100), bits: btoa(bin), loose };
+  try { localStorage.setItem(saveKey(world.id), JSON.stringify(data)); } catch (e) {}
+}
+function restoreSave(d) {
+  if (!d || d.N !== N) return false; // the map changed in an update: start fresh
+  const bin = atob(d.bits);
+  for (let n = 0; n < N; n++) {
+    if (!(bin.charCodeAt(n >> 3) & (1 << (n & 7)))) continue;
+    clearCells(n); hideStatic(n); state[n] = 3;
+    const v = sz[n] * sz[n] * sz[n];
+    eatenVol += v; remainingPieces--;
+    groupRemaining[COLORS[colIdx[n]].group] -= v;
+  }
+  for (let i = 0; i < d.loose.length; i += 4) {
+    const n = d.loose[i];
+    if (n >= N || state[n] !== 0) continue;
+    clearCells(n); hideStatic(n);
+    state[n] = 2; cx[n] = d.loose[i + 1]; cy[n] = d.loose[i + 2]; cz[n] = d.loose[i + 3];
+    active.push(n);
+  }
+  hole.level = Math.min(d.level, RADII.length - 1);
+  hole.r = hole.rTarget = RADII[hole.level];
+  hole.x = d.x; hole.z = d.z; prevHX = hole.x; prevHZ = hole.z;
+  elapsed = d.t || 0;
+  clampHole(); updateCamera(0, true); updateHUD();
+  return true;
+}
+addEventListener('visibilitychange', () => { if (document.hidden && playing) saveGame(); });
+addEventListener('pagehide', () => { if (playing) saveGame(); });
+
 function renderCards() {
   const done = cleared();
   cardsEl.innerHTML = '';
   for (const id of MAP_ORDER) {
     const m = MAPS[id];
+    const sv = readSave(id);
+    const wrap = document.createElement('div');
+    wrap.className = 'card-wrap';
     const b = document.createElement('button');
     b.className = 'card card-' + id;
-    b.innerHTML = `<span class="art"></span><span class="name">${m.name}</span><span class="tag">${done[id] ? 'Cleared ✓' : m.tagline}</span>`;
+    const tag = sv ? `Resume · ${sv.pct}% cleared` : done[id] ? 'Cleared ✓' : m.tagline;
+    b.innerHTML = `<span class="art"></span><span class="name">${m.name}</span><span class="tag${sv ? ' resume' : ''}">${tag}</span>`;
     b.addEventListener('click', () => play(id));
-    cardsEl.appendChild(b);
+    wrap.appendChild(b);
+    if (sv) {
+      const r = document.createElement('button');
+      r.className = 'restart';
+      r.textContent = 'Start over';
+      r.addEventListener('click', () => play(id, true));
+      wrap.appendChild(r);
+    }
+    cardsEl.appendChild(wrap);
   }
 }
 function goFullscreen() {
@@ -753,23 +834,30 @@ function goFullscreen() {
     } catch (e) {}
   }
 }
-function play(id) {
+function play(id, fresh = false) {
   sfx.init(); goFullscreen();
-  if (id !== world.id || eatenVol > 0) loadWorld(id);
-  startEl.classList.add('gone'); winEl.classList.add('gone');
-  hintEl.classList.remove('gone');
-  playing = true; startTime = performance.now();
+  if (fresh) clearSave(id);
+  const sv = readSave(id);
+  if (id !== world.id || eatenVol > 0 || sv) loadWorld(id);
+  elapsed = 0;
+  if (sv && !restoreSave(sv)) clearSave(id);
+  startEl.classList.add('gone'); winEl.classList.add('gone'); pauseEl.classList.add('gone');
+  let hinted = false;
+  try { hinted = localStorage.getItem('void-hinted') === '1'; localStorage.setItem('void-hinted', '1'); } catch (e) {}
+  hintEl.classList.toggle('gone', hinted);
+  playing = true; saveT = 0;
 }
 function showStart() {
   renderCards();
   playing = false;
-  winEl.classList.add('gone');
+  winEl.classList.add('gone'); pauseEl.classList.add('gone');
   startEl.classList.remove('gone');
 }
 function win() {
   won = true; playing = false;
+  clearSave(world.id);
   try { const c = cleared(); c[world.id] = true; localStorage.setItem('void-cleared', JSON.stringify(c)); } catch (e) {}
-  const secs = Math.round((performance.now() - startTime) / 1000);
+  const secs = Math.round(elapsed);
   document.getElementById('win-title').textContent = 'All clear';
   document.getElementById('win-text').textContent = world.win;
   document.getElementById('win-stats').textContent = `${totalVol.toLocaleString()} cubes · ${Math.floor(secs / 60)}m ${String(secs % 60).padStart(2, '0')}s`;
@@ -780,7 +868,18 @@ function win() {
   sfx.fanfare();
   winEl.classList.remove('gone');
 }
-document.getElementById('again').addEventListener('click', () => { loadWorld(world.id); showStart(); });
+document.getElementById('again').addEventListener('click', () => { clearSave(world.id); loadWorld(world.id); showStart(); });
+// pause / quit
+const pauseEl = document.getElementById('pause');
+document.getElementById('menu').addEventListener('click', () => {
+  if (!playing) return;
+  playing = false; drag = null; stickEl.classList.add('gone');
+  saveGame();
+  document.getElementById('pause-stats').textContent = `${Math.floor((eatenVol / totalVol) * 100)}% cleared · Size ${hole.level + 1}`;
+  pauseEl.classList.remove('gone');
+});
+document.getElementById('resume').addEventListener('click', () => { pauseEl.classList.add('gone'); playing = true; });
+document.getElementById('tomaps').addEventListener('click', () => { saveGame(); showStart(); });
 document.getElementById('fs').addEventListener('click', () => { if (document.fullscreenElement) document.exitFullscreen(); else goFullscreen(); });
 const muteBtn = document.getElementById('mute');
 const setMuteIcon = () => muteBtn.classList.toggle('off', sfx.muted);
@@ -810,6 +909,9 @@ function frame(now) {
   popBudget = Math.min(popBudget + dt * 14, 3);
   lockedToastT -= dt;
   if (playing) {
+    elapsed += dt;
+    saveT += dt;
+    if (saveT > 5) { saveT = 0; saveGame(); }
     applyStick(dt);
     const sp = (viewShort * 0.3 + 2.5) * dt;
     if (keys.ArrowLeft || keys.a) hole.x -= sp; if (keys.ArrowRight || keys.d) hole.x += sp;
@@ -826,6 +928,7 @@ function frame(now) {
   shake = Math.max(0, shake - dt * 2.2);
   const g = 1 + gulp * 0.05;
   ringGroup.scale.set(g, 1, g);
+  progGroup.position.set(hole.x, 0, hole.z);
   if (playing) swallowScan();
   supportCheck();
   physics(dt);
@@ -833,8 +936,7 @@ function frame(now) {
   updateBeacons(t);
   shownProgress += (levelProgress() - shownProgress) * (1 - Math.exp(-dt * 6));
   if (flashT > 0) { flashT = Math.max(0, flashT - dt * 1.4); shownProgress = flashT > 0.5 ? 1 : shownProgress * (flashT > 0 ? 0.5 : 1); }
-  setRingProgress(flashT > 0.5 ? 1 : shownProgress);
-  fillMat.color.set(flashT > 0 ? '#fff4d6' : '#ffad42');
+  fillMat.color.set(flashT > 0 ? '#fff6d8' : '#ffc83d');
   rimMat.opacity = 0.75 + Math.max(flashT, gulp) * 0.25;
   if (bubbleMesh.visible) {
     for (let i = 0; i < BUBBLES; i++) {
@@ -848,6 +950,7 @@ function frame(now) {
     bubbleMesh.instanceMatrix.needsUpdate = true;
   }
   updateCamera(dt);
+  updateRing(flashT > 0.5 ? 1 : shownProgress);
   uploadStatic();
   renderer.render(scene, camera);
   updateOverlay();

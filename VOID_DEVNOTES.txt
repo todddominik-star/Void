@@ -1,6 +1,6 @@
 =======================================
   VOID — DEVELOPMENT NOTES (browser rebuild)
-  Phase 2 — October 31, 2026
+  Phase 3 — November 1, 2026
 =======================================
 
 WHAT CHANGED
@@ -68,7 +68,7 @@ PHASE 2 CANDIDATES
 FILES
 -----
 src/: builder.js (shared voxel tools + big-block merging), palette.js,
-farm.js, reef.js, main.js, index.html. build.mjs bundles everything into
+farm.js, reef.js, valley.js, main.js, index.html. build.mjs bundles everything into
 one index.html plus manifest, sw.js and icons in dist/.
 
 PHASE 1.1 CHANGES (after Todd's first laptop play)
@@ -139,9 +139,44 @@ PHASE 2.1 FIXES (Todd's phone play, Oct 31)
   each one (plus the edge arrow), so the last cubes are easy to find.
 - Reef: the low-contrast sand-coloured cubes became bright little shells.
 
-NEXT SESSION LIST (Todd, Oct 31)
---------------------------------
-- Save progress mid-map, so a fully closed app resumes the same map
-  where it left off (eaten cubes, size, hole position).
-- A quit / menu button on the game screen to end a run and return to
-  the map picker.
+PHASE 3 (Nov 1)
+---------------
+Zoom and ring
+- Much less zoom-out per size: view (short side) = 24 + hole diameter x 2.2
+  cubes (was 16 + diameter x 4.5). At Size 9 cubes look ~55% bigger than
+  before and the hole fills about a third of the screen width.
+- The progress ring had gone thin enough to vanish at small sizes (it
+  scaled with the hole). It is now drawn at a fixed 3 screen pixels, warm
+  gold (#ffc83d) over a faint white track, with a soft dark outline, a few
+  pixels outside the rim, and always drawn on top.
+- Board sides are now 40 deep (were 6), so the hole's tube never shows
+  below the board edge.
+
+Save and pause
+- Each map saves itself in the browser every 5 s, when the app is hidden
+  or closed, and when you pause. Saves record eaten pieces, loose debris,
+  size, hole position and play time.
+- Map picker shows "Resume · N% cleared" with a "Start over" link.
+  Winning a map clears its save. A save is dropped if a later update
+  changes that map's layout.
+- Pause button (top right). Pause panel: "Keep playing" or "Back to maps".
+- The "Press and pull" hint now only shows the first time ever.
+- HUD squeezes slightly on narrow phones; 5-digit counts use a smaller font.
+
+Third map: Valley
+- Flat meadow (glen) at the front with wildflowers, lupine patches,
+  mushrooms, a mossy log, stumps, boulders and berry bushes.
+- Ring of pines, birches, round trees and a few golden autumn trees.
+- Light brown terraced hills (2-cube steps) with grassy tops and trees.
+- Mountain range at the back: grey stone, green lower slopes, snow above
+  height 25-30. Hardy pines on the lower slopes.
+- A waterfall at the mountain foot feeds a stream that cuts a channel
+  through the hills, passes under a plank bridge and fills a lake with
+  lily pads and reeds.
+- About 99,000 unit cubes (23,000 pieces; hidden insides are big blocks).
+  Early sizes come sooner on this map (its own size-up targets).
+- Bot cleared it at phone size with no errors.
+
+NEXT SESSION LIST
+-----------------
+- (empty: add Todd's notes from playing Phase 3)

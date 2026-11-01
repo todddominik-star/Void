@@ -59,6 +59,15 @@ const P = [
   ['whaleBelly', '#e3ebf2', 'white'], ['clam', '#efe2d2', 'white'], ['pearl', '#fffaf0', 'white'],
   ['sail2', '#efe7d6', 'white'], ['fishWhite', '#f7f7f2', 'white'],
   ['sandLight', '#f3e4b5', 'sand'], ['sandDark', '#dcc58c', 'sand'],
+  // valley
+  ['earth', '#cfa878', 'brown'], ['earthDark', '#b88f60', 'brown'], ['earthLight', '#dcb98b', 'brown'],
+  ['meadow', '#86cf62', 'green'], ['meadow2', '#74c056', 'green'], ['moss', '#9bd36b', 'green'],
+  ['mtn', '#7f838c', 'gray'], ['mtn2', '#6e727b', 'gray'], ['mtnLight', '#9599a2', 'gray'],
+  ['snow', '#f7f9fc', 'white'], ['snow2', '#e7edf4', 'white'], ['birch', '#f1ede4', 'white'],
+  ['stream', '#69bfe6', 'blue'], ['stream2', '#86d0ef', 'blue'], ['foam', '#e9f7fd', 'blue'],
+  ['shroomCap', '#e2574f', 'red'], ['berry', '#c6435a', 'red'],
+  ['bluebell', '#7ea2f0', 'purple'], ['lupine', '#a57be6', 'purple'],
+  ['goldenrod', '#f5c843', 'yellow'], ['aspen', '#f2c14e', 'yellow'],
 ];
 
 export const COLORS = P.map(([name, hex, group]) => ({ name, hex, group }));
