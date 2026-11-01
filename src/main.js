@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { COLORS, GROUPS } from './palette.js';
-import { GRID_HALF, GRID_K } from './builder.js';
+import { GRID_HALF, GRID_K, PLAY_EDGE, PLAY_DIAG, CORNER_DIAG } from './builder.js';
 import { FARM } from './farm.js';
 import { REEF } from './reef.js';
 import { VALLEY } from './valley.js';
+import { CASTLE } from './castle.js';
 
-const MAPS = { farm: FARM, reef: REEF, valley: VALLEY };
-const MAP_ORDER = ['farm', 'reef', 'valley'];
+const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE };
+const MAP_ORDER = ['farm', 'reef', 'valley', 'castle'];
 
 // ------------------------------------------------------------------ tuning
 const RADII = [1.6, 2.1, 2.7, 3.4, 4.2, 5.2, 6.4, 7.8, 9.4]; // hole radius per size
@@ -87,6 +88,19 @@ const skirtMat = new THREE.MeshLambertMaterial({ color: '#7fbc63' });
   mk(BOARD, 1, 0, BOARD / 2 - 0.5); mk(BOARD, 1, 0, -BOARD / 2 + 0.5);
   mk(1, BOARD, BOARD / 2 - 0.5, 0); mk(1, BOARD, -BOARD / 2 + 0.5, 0);
 }
+
+// corner triangles: a raised border the hole can't reach, so nothing is ever stranded there
+const cornerMat = new THREE.MeshLambertMaterial({ color: '#7fbc63' });
+for (const [ex, ez] of [[61.5, 61.5], [-62.5, 61.5], [61.5, -62.5], [-62.5, -62.5]]) {
+  const L = Math.abs(ex) + Math.abs(ez) - CORNER_DIAG;
+  const sx = Math.sign(ex), sz = Math.sign(ez);
+  const shape = new THREE.Shape([new THREE.Vector2(ex, -ez), new THREE.Vector2(ex - sx * L, -ez), new THREE.Vector2(ex, -(ez - sz * L))]);
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: 1.2, bevelEnabled: false });
+  const m = new THREE.Mesh(geo, cornerMat);
+  m.rotation.x = -Math.PI / 2; m.receiveShadow = true; m.castShadow = true;
+  scene.add(m);
+}
+const outsidePlay = (x, z) => Math.abs(x) > PLAY_EDGE + 0.4 || Math.abs(z) > PLAY_EDGE + 0.4 || Math.abs(x) + Math.abs(z) > PLAY_DIAG + 0.5;
 
 // hole interior: open cylinder seen from inside + dark floor
 const holeGroup = new THREE.Group();
@@ -222,7 +236,7 @@ const inGrid = (i, j, k) => i >= -GO && i < GO && j >= -GO && j < GO && k >= 0 &
 
 // per-world state
 let world = FARM, N = 0;
-let captured, cx, cy, cz, vx, vy, vz, rx, ry, rz, wx, wy, wz, gi, gj, gk, sz, colR, colG, colB, colIdx, state, visitStamp, scanStamp, baseMatrixDirty;
+let captured, restKey, cx, cy, cz, vx, vy, vz, rx, ry, rz, wx, wy, wz, gi, gj, gk, sz, colR, colG, colB, colIdx, state, visitStamp, scanStamp, baseMatrixDirty;
 let staticMesh = null;
 let totalVol = 0, eatenVol = 0, remainingPieces = 0, thresholds = [];
 const groupRemaining = {};
@@ -240,6 +254,7 @@ function loadWorld(id) {
   // look and light
   groundMat.color.set(world.ground);
   skirtMat.color.set(world.skirt);
+  cornerMat.color.set(world.skirt).multiplyScalar(0.92);
   scene.fog.color.set(world.sky);
   hemi.color.setHex(world.hemiSky); hemi.groundColor.setHex(world.hemiGround);
   sun.color.setHex(world.sun);
@@ -259,6 +274,8 @@ function loadWorld(id) {
   colR = F(); colG = F(); colB = F();
   gi = new Int16Array(N); gj = new Int16Array(N); gk = new Int16Array(N);
   captured = new Uint8Array(N);
+  restKey = new Int32Array(N).fill(-1);
+  pileH.clear(); pileList.clear();
   sz = new Uint8Array(N); colIdx = new Uint8Array(N); state = new Uint8Array(N);
   visitStamp = new Int32Array(N); scanStamp = new Int32Array(N);
   occ.fill(0);
@@ -346,6 +363,7 @@ function release(n, inward) {
 }
 function consume(n) {
   if (state[n] === 0) { clearCells(n); hideStatic(n); }
+  pileUnregister(n);
   state[n] = 3;
   const v = sz[n] * sz[n] * sz[n];
   eatenVol += v; remainingPieces--;
@@ -402,13 +420,37 @@ function supportCheck() {
   }
 }
 
-// highest static surface under a point (for landing)
+// fallen cubes stack into neat piles instead of overlapping (overlaps flicker)
+const pileH = new Map(), pileList = new Map();
+const keyAt = (x, z) => (Math.round(x) + GO) * GW + (Math.round(z) + GO);
+function pileRegister(n) {
+  const key = keyAt(cx[n], cz[n]);
+  restKey[n] = key;
+  pileH.set(key, (pileH.get(key) || 0) + sz[n]);
+  const arr = pileList.get(key);
+  if (arr) arr.push(n); else pileList.set(key, [n]);
+}
+function pileUnregister(n) {
+  const key = restKey[n];
+  if (key < 0) return;
+  restKey[n] = -1;
+  pileH.set(key, Math.max(0, (pileH.get(key) || 0) - sz[n]));
+  const arr = pileList.get(key);
+  if (!arr) return;
+  const i = arr.indexOf(n);
+  if (i >= 0) arr.splice(i, 1);
+  // anything stacked above this piece drops
+  for (const m of arr.slice()) if (cy[m] > cy[n]) { pileUnregister(m); if (state[m] === 2) { state[m] = 1; vx[m] = vy[m] = vz[m] = 0; } }
+}
+
+// highest surface under a point (for landing): static cubes, corner triangles, then any pile of fallen cubes
 function floorAt(x, z, bottom) {
   const i = Math.round(x), j = Math.round(z);
   if (i < -GO || i >= GO || j < -GO || j >= GO || Math.abs(i) > world.half + 1 || Math.abs(j) > world.half + 1) return -999;
-  let k = Math.min(GK - 1, Math.floor(bottom));
-  for (; k >= 0; k--) if (occ[oIdx(i, j, k)]) return k + 1;
-  return 0;
+  let k = Math.min(GK - 1, Math.floor(bottom)), f = 0;
+  for (; k >= 0; k--) if (occ[oIdx(i, j, k)]) { f = k + 1; break; }
+  if (Math.abs(x) + Math.abs(z) > CORNER_DIAG) f = Math.max(f, 1.2);
+  return f + (pileH.get(keyAt(x, z)) || 0);
 }
 
 // ------------------------------------------------------------------ swallowing
@@ -475,11 +517,21 @@ function physics(dt) {
     const ux = dx / d, uz = dz / d;
     if (state[n] === 2) {
       // resting debris drifts into the hole when near the rim (if the hole is big enough for it)
-      if (d < r - 0.15 - (s - 1) * 0.3 && canSwallow(s)) { state[n] = 1; vx[n] = ux; vz[n] = uz; vy[n] = 0; }
+      if (d < r - 0.15 - (s - 1) * 0.3 && canSwallow(s)) { pileUnregister(n); state[n] = 1; vx[n] = ux; vz[n] = uz; vy[n] = 0; }
       else {
-        if (d < r + 1.3 && canSwallow(s)) { const sp = (1 - (d - r) / 1.3) * 2.2 * dt / s; x += ux * sp; z += uz * sp; }
-        const f = floorAt(x, z, y - h);
-        if (f === -999 || y - h > f + 0.05) { state[n] = 1; vy[n] = 0; vx[n] = 0; vz[n] = 0; }
+        let moved = false;
+        if (d < r + 1.3 && canSwallow(s)) { const sp = (1 - (d - r) / 1.3) * 2.2 * dt / s; x += ux * sp; z += uz * sp; moved = true; }
+        // anything that ends up where the hole can't reach slides back onto the playable area
+        if (outsidePlay(x, z)) {
+          const L = Math.hypot(x, z) || 1;
+          x -= (x / L) * 2.5 * dt; z -= (z / L) * 2.5 * dt; moved = true;
+          y = Math.max(y, (Math.abs(x) + Math.abs(z) > CORNER_DIAG ? 1.2 : 0) + h);
+        }
+        if (moved && restKey[n] >= 0 && keyAt(x, z) !== restKey[n]) pileUnregister(n);
+        if (restKey[n] < 0) {
+          const f = floorAt(x, z, y - h);
+          if (f === -999 || y - h > f + 0.05) { state[n] = 1; vy[n] = 0; vx[n] = 0; vz[n] = 0; }
+        }
       }
     }
     if (state[n] === 1) {
@@ -517,8 +569,14 @@ function physics(dt) {
             vy[n] *= -0.22; vx[n] *= 0.6; vz[n] *= 0.6; wx[n] *= 0.5; wz[n] *= 0.5;
           } else {
             state[n] = 2; captured[n] = 0; vx[n] = vy[n] = vz[n] = 0;
+            // settle square on the grid so piles stack neatly
             rx[n] = Math.round(rx[n] / (Math.PI / 2)) * (Math.PI / 2);
+            ry[n] = Math.round(ry[n] / (Math.PI / 2)) * (Math.PI / 2);
             rz[n] = Math.round(rz[n] / (Math.PI / 2)) * (Math.PI / 2);
+            x = Math.round(x - (s - 1) / 2) + (s - 1) / 2; z = Math.round(z - (s - 1) / 2) + (s - 1) / 2;
+            cx[n] = x; cz[n] = z;
+            y = floorAt(x, z, y - h + 0.5) + h; cy[n] = y;
+            pileRegister(n);
           }
         }
       }
@@ -640,6 +698,8 @@ function clampHole() {
   const lim = Math.min(world.half + 1, 61.5 - hole.r - 0.4);
   hole.x = Math.max(-lim, Math.min(lim, hole.x));
   hole.z = Math.max(-lim, Math.min(lim, hole.z));
+  const dmax = CORNER_DIAG - 1.42 * hole.r - 0.3, ds = Math.abs(hole.x) + Math.abs(hole.z);
+  if (ds > dmax) { const d = (ds - dmax) / 2; hole.x -= Math.sign(hole.x) * d; hole.z -= Math.sign(hole.z) * d; }
 }
 const keys = {};
 addEventListener('keydown', (e) => (keys[e.key] = true));
@@ -788,6 +848,7 @@ function restoreSave(d) {
     if (n >= N || state[n] !== 0) continue;
     clearCells(n); hideStatic(n);
     state[n] = 2; cx[n] = d.loose[i + 1]; cy[n] = d.loose[i + 2]; cz[n] = d.loose[i + 3];
+    restKey[n] = -1;
     active.push(n);
   }
   hole.level = Math.min(d.level, RADII.length - 1);

@@ -68,6 +68,15 @@ const P = [
   ['shroomCap', '#e2574f', 'red'], ['berry', '#c6435a', 'red'],
   ['bluebell', '#7ea2f0', 'purple'], ['lupine', '#a57be6', 'purple'],
   ['goldenrod', '#f5c843', 'yellow'], ['aspen', '#f2c14e', 'yellow'],
+  // castle
+  ['keep', '#c4bfb5', 'gray'], ['keep2', '#b3ada2', 'gray'], ['keepDark', '#948f86', 'gray'], ['cobble', '#a39d92', 'gray'],
+  ['slate', '#5d6a86', 'blue'], ['roofCastle', '#4f73b8', 'blue'], ['bannerBlue', '#3f63b0', 'blue'], ['lit', '#ffe08a', 'yellow'],
+  ['roofTile', '#c65a4a', 'red'], ['banner', '#c9443f', 'red'], ['awningRed', '#e2574f', 'red'],
+  ['bannerGold', '#f2c14e', 'yellow'], ['awningYellow', '#f7d36b', 'yellow'],
+  ['plaster', '#f3ead6', 'white'], ['awningWhite', '#fbf7ee', 'white'], ['target', '#fafafa', 'white'],
+  ['timber', '#7a5236', 'brown'], ['barrel', '#a06a3e', 'brown'], ['crate', '#c08a52', 'brown'],
+  ['dragon', '#4fa36a', 'green'], ['dragonDark', '#3b8a58', 'green'], ['dragonBelly', '#e8d27a', 'yellow'],
+  ['ember', '#ff8a3d', 'orange'], ['tentPurple', '#9b7ae0', 'purple'],
 ];
 
 export const COLORS = P.map(([name, hex, group]) => ({ name, hex, group }));

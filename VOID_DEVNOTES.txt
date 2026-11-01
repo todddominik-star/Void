@@ -196,3 +196,42 @@ NEXT SESSION LIST
 [Todd] I like the Reef level. I like the floating jellyfish, but think they could be floating higher above the game floor. I understand there is a game ceiling too. Not sure what we can do, please tell me.
 the new border height hides the hole very well.
 the hole comes not extend past the game board now, this is fixed.
+
+PHASE 4 (Nov 1, afternoon) — from Todd's notes
+---------------------------------------------
+- [Todd] counters fine: unchanged.
+- Corners: a round hole can't reach into a square corner, and the bigger
+  the hole the bigger the unreachable patch (about 4 cubes at Size 9).
+  Fix: low triangles in each corner (border colour, 11-13 cubes a side,
+  starting at |x|+|z| = 112). Maps can only place cubes at |x|,|z| <= 59
+  and |x|+|z| <= 109, the hole is kept clear of the triangles, and any
+  fallen cube that lands on a triangle or at the very edge slides back
+  onto the playable area. (builder.js PLAY_EDGE / PLAY_DIAG / CORNER_DIAG)
+- Shimmer: fallen cubes landing in the same spot overlapped and flickered.
+  Fallen cubes now settle square on the grid and stack into neat piles;
+  pulling a cube out of a pile drops the ones above it.
+- Reef jellyfish now float at heights 26-32 (was 12-18); a fifth one added.
+  The world is 48 cubes tall; it can be raised if we ever need taller maps.
+- Reef and Valley layouts changed slightly, so any saved progress on those
+  two maps starts fresh once.
+
+Fourth map: Castle
+- Market village at the front: half-timbered cottages with lit windows and
+  flower boxes, striped market stalls with produce, a fountain on the
+  cobbled road, lanterns, barrels, crates and a hay cart.
+- Moat around the castle, lowered drawbridge with chains, portcullis.
+- Curtain walls 4 thick and 12 high with crenellations, a gatehouse with
+  banners, four round towers with blue cone roofs and flags.
+- Courtyard: smithy with glowing forge and anvil, archery targets, straw
+  training dummies, a roofed well, trees.
+- The keep (24 x 16 x 20) with lit windows, banners and a great tower on
+  top reaching the ceiling, with the tallest flag.
+- West: tournament field with a striped jousting fence and pavilion tents.
+  East: apple orchard and hay bales.
+- Behind the castle in the pine woods: a green dragon curled asleep on a
+  rock with a little gold hoard, and "Z z z" floating above its head.
+- About 40,000 unit cubes (15,700 pieces). Bot cleared it with no errors.
+
+NEXT SESSION IDEAS
+------------------
+- Maps: beach (umbrella, cabana, sand castle, crabs), airport, stadium.

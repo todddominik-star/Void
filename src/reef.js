@@ -230,7 +230,7 @@ export function buildReef() {
   branchCoral(44, 12, C.coralPink, 8); branchCoral(46, -6, C.coralOrange, 9);
   set(44, 6, 18, C.coralPurple);
   submarine(26, -48);
-  jellyfish(30, 14, 8); jellyfish(-28, 16, -40); jellyfish(12, 18, 36); jellyfish(38, 12, -36);
+  jellyfish(30, 27, 8); jellyfish(-28, 30, -40); jellyfish(12, 28, 36); jellyfish(38, 32, -36); jellyfish(-20, 26, 18);
   school(34, 6, -8, 6, C.fishYellow, C.fishBlue);
   // boulders and kelp around the edge
   for (let n = 0; n < 22; n++) {

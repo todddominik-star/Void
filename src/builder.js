@@ -5,6 +5,9 @@
 
 export const GRID_HALF = 64; // occupancy grid spans -64..63
 export const GRID_K = 48;    // max height
+export const PLAY_EDGE = 59; // cubes may sit at |x|, |z| <= 59
+export const PLAY_DIAG = 109; // and |x| + |z| <= 109 (corners are cut off)
+export const CORNER_DIAG = 112; // the corner triangles start here
 
 export function hash(a, b, c) {
   let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0;
@@ -18,7 +21,8 @@ export function makeBuilder(seed = 12345) {
   let s = seed;
   const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
   const key = (i, j, k) => ((i + GRID_HALF) * 128 + (j + GRID_HALF)) * GRID_K + k;
-  const inside = (i, k, j) => k >= 0 && k < GRID_K - 2 && i > -GRID_HALF + 1 && i < GRID_HALF - 2 && j > -GRID_HALF + 1 && j < GRID_HALF - 2;
+  // playable area: inside the board edge, and clear of the corner triangles the hole can't reach
+  const inside = (i, k, j) => k >= 0 && k < GRID_K - 2 && Math.abs(i) <= PLAY_EDGE && Math.abs(j) <= PLAY_EDGE && Math.abs(i) + Math.abs(j) <= PLAY_DIAG;
   const colOf = (col, i, k, j) => (typeof col === 'function' ? col(i, k, j) : col);
 
   const set = (i, k, j, col) => {
