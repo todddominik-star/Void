@@ -193,3 +193,6 @@ NEXT SESSION LIST
 [Todd] The corner can be impossible to clear after level 4 or so, even 4x4 cubes cannot be cleared with a size 9 hole. ask for screenshots. let's make a triangle in the corner part of the margin or border, and thus unsuitable and not a surface where falling cubes can land. the valley was the first level to build right up to the corner.
 [Todd] the valley displayed no lag when played. it ran well. good engine build.
 [Todd] some cubes, mostly the 1x1, and only after falling, shimmer on the game floor as if they cannot fall "flat". maybe it is falling into a pile. the point is the odd shimmer of color. it is minor and does not impact play at all.
+[Todd] I like the Reef level. I like the floating jellyfish, but think they could be floating higher above the game floor. I understand there is a game ceiling too. Not sure what we can do, please tell me.
+the new border height hides the hole very well.
+the hole comes not extend past the game board now, this is fixed.
