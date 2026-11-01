@@ -185,7 +185,11 @@ NEXT SESSION LIST
   so they feel like they aren't counting. Decide the design with Todd first
   (e.g. one big "cubes left" counter from the map total down to 0, plus
   colour tiles that stay fixed for the whole map).
+[Todd] This is working fine. no changes needed.
 - Map ideas (Todd): airport; football or baseball stadium; beach with
   umbrella, cabana, sand castle and crabs; castle (use thick walls and
   solid keeps so most of it becomes 2x/4x blocks and the piece count
   stays phone-friendly).
+[Todd] The corner can be impossible to clear after level 4 or so, even 4x4 cubes cannot be cleared with a size 9 hole. ask for screenshots. let's make a triangle in the corner part of the margin or border, and thus unsuitable and not a surface where falling cubes can land. the valley was the first level to build right up to the corner.
+[Todd] the valley displayed no lag when played. it ran well. good engine build.
+[Todd] some cubes, mostly the 1x1, and only after falling, shimmer on the game floor as if they cannot fall "flat". maybe it is falling into a pile. the point is the odd shimmer of color. it is minor and does not impact play at all.
