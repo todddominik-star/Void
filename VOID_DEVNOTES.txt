@@ -179,4 +179,13 @@ Third map: Valley
 
 NEXT SESSION LIST
 -----------------
-- (empty: add Todd's notes from playing Phase 3)
+- Counters (Todd, Nov 1): make them read clearly as "what's left", counting
+  down toward zero. They already show cubes remaining, but they show the
+  three colours with the MOST left, which barely move early and re-sort,
+  so they feel like they aren't counting. Decide the design with Todd first
+  (e.g. one big "cubes left" counter from the map total down to 0, plus
+  colour tiles that stay fixed for the whole map).
+- Map ideas (Todd): airport; football or baseball stadium; beach with
+  umbrella, cabana, sand castle and crabs; castle (use thick walls and
+  solid keeps so most of it becomes 2x/4x blocks and the piece count
+  stays phone-friendly).
