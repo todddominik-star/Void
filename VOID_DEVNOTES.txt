@@ -235,3 +235,13 @@ Fourth map: Castle
 NEXT SESSION IDEAS
 ------------------
 - Maps: beach (umbrella, cabana, sand castle, crabs), airport, stadium.
+
+NIT: handling cube collapse causing flicker was solved with a change to "stack" the cubes and not overlap. this now results in the hole approaching a tree, about 15 cubes tall, and as it swallows, i suddenly see stacks of green 1x1 cubes about 30 or 35 tall. so, instead of "collapsing", suddenly we are building stacks far taller than the original object. The ask is for a collapse to cause cubes to spill away from the object, in a direction opposite of the existing, stacked cubes, which make up the "wall" behind the falling cubes, and flow away like pouring water. let me know if this is confusing. much of this spreading debris will be immediately swallowed, that is fine.
+
+the updated corners on the frame look fine and seem to work fine.
+
+the castle is awsome.
+
+the updated Reef and jellyfish look great. thanks for that update.
+
+is the game board a fixed square in a fixed position? the baseball stadium, normally a diamond, could be rendered on a diamond floor by turning 45°. how complicated is this.
