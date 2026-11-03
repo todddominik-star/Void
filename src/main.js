@@ -6,9 +6,10 @@ import { FARM } from './farm.js';
 import { REEF } from './reef.js';
 import { VALLEY } from './valley.js';
 import { CASTLE } from './castle.js';
+import { STADIUM } from './stadium.js';
 
-const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE };
-const MAP_ORDER = ['farm', 'reef', 'valley', 'castle'];
+const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE, stadium: STADIUM };
+const MAP_ORDER = ['farm', 'reef', 'valley', 'castle', 'stadium'];
 
 // ------------------------------------------------------------------ tuning
 const RADII = [1.6, 2.1, 2.7, 3.4, 4.2, 5.2, 6.4, 7.8, 9.4]; // hole radius per size
@@ -48,6 +49,7 @@ const hole = { x: 0, z: 40, r: RADII[0], rTarget: RADII[0], level: 0 };
 const holeUniform = { value: new THREE.Vector3(hole.x, hole.z, hole.r) };
 const timeUniform = { value: 0 };
 const causticUniform = { value: 0 };
+const stripeUniform = { value: 0 };
 
 // ------------------------------------------------------------------ ground
 const groundMat = new THREE.MeshLambertMaterial({ color: '#9fd47c' });
@@ -55,9 +57,10 @@ groundMat.onBeforeCompile = (s) => {
   s.uniforms.uHole = holeUniform;
   s.uniforms.uTime = timeUniform;
   s.uniforms.uCaustic = causticUniform;
+  s.uniforms.uStripes = stripeUniform;
   s.vertexShader = 'varying vec3 vWPos;\n' + s.vertexShader.replace('#include <begin_vertex>',
     '#include <begin_vertex>\n vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-  s.fragmentShader = 'uniform vec3 uHole;\nuniform float uTime;\nuniform float uCaustic;\nvarying vec3 vWPos;\n' + s.fragmentShader
+  s.fragmentShader = 'uniform vec3 uHole;\nuniform float uTime;\nuniform float uCaustic;\nuniform float uStripes;\nvarying vec3 vWPos;\n' + s.fragmentShader
     .replace('void main() {', 'void main() {\n float dh = distance(vWPos.xz, uHole.xy);\n if (dh < uHole.z) discard;')
     .replace('#include <color_fragment>', `#include <color_fragment>
       vec2 t = floor(vWPos.xz / 2.0 + 0.25);
@@ -66,6 +69,11 @@ groundMat.onBeforeCompile = (s) => {
       vec2 f = fract(vWPos.xz / 2.0 + 0.25);
       float g = min(min(f.x, 1.0 - f.x), min(f.y, 1.0 - f.y));
       diffuseColor.rgb *= mix(0.9 + uCaustic * 0.05, 1.0, smoothstep(0.0, 0.035, g));
+      if (uStripes > 0.5) {
+        // mowed lawn: wide diagonal bands, two shades of green
+        float band = mod(floor((vWPos.x - vWPos.z) / 7.0), 2.0);
+        diffuseColor.rgb *= mix(0.88, 1.07, band);
+      }
       if (uCaustic > 0.5) {
         vec2 p = vWPos.xz * 0.35;
         float c1 = sin(p.x * 1.7 + uTime * 0.9 + sin(p.y * 1.3 + uTime * 0.6) * 1.6);
@@ -236,7 +244,7 @@ const inGrid = (i, j, k) => i >= -GO && i < GO && j >= -GO && j < GO && k >= 0 &
 
 // per-world state
 let world = FARM, N = 0;
-let captured, restKey, cx, cy, cz, vx, vy, vz, rx, ry, rz, wx, wy, wz, gi, gj, gk, sz, colR, colG, colB, colIdx, state, visitStamp, scanStamp, baseMatrixDirty;
+let captured, restKey, spillCount, cx, cy, cz, vx, vy, vz, rx, ry, rz, wx, wy, wz, gi, gj, gk, sz, colR, colG, colB, colIdx, state, visitStamp, scanStamp, baseMatrixDirty;
 let staticMesh = null;
 let totalVol = 0, eatenVol = 0, remainingPieces = 0, thresholds = [];
 const groupRemaining = {};
@@ -259,6 +267,7 @@ function loadWorld(id) {
   hemi.color.setHex(world.hemiSky); hemi.groundColor.setHex(world.hemiGround);
   sun.color.setHex(world.sun);
   causticUniform.value = world.caustics ? 1 : 0;
+  stripeUniform.value = world.stripes ? 1 : 0;
   bubbleMesh.visible = !!world.bubbles;
   document.body.style.background = world.bg;
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', world.sky);
@@ -274,6 +283,7 @@ function loadWorld(id) {
   colR = F(); colG = F(); colB = F();
   gi = new Int16Array(N); gj = new Int16Array(N); gk = new Int16Array(N);
   captured = new Uint8Array(N);
+  spillCount = new Uint8Array(N);
   restKey = new Int32Array(N).fill(-1);
   pileH.clear(); pileList.clear();
   sz = new Uint8Array(N); colIdx = new Uint8Array(N); state = new Uint8Array(N);
@@ -443,6 +453,21 @@ function pileUnregister(n) {
   for (const m of arr.slice()) if (cy[m] > cy[n]) { pileUnregister(m); if (state[m] === 2) { state[m] = 1; vx[m] = vy[m] = vz[m] = 0; } }
 }
 
+// a lower neighbouring spot to pour into (at least one cube lower), or null
+const SPILL = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+function spillDir(x, z, f, s) {
+  let best = null, bf = f - 0.99;
+  const start = (Math.random() * 8) | 0;
+  for (let q = 0; q < 8; q++) {
+    const [a, b] = SPILL[(start + q) % 8];
+    const nx = x + a * s, nz = z + b * s;
+    if (outsidePlay(nx, nz)) continue;
+    const fn = floorAt(nx, nz, f + 0.5);
+    if (fn !== -999 && fn < bf) { bf = fn; best = SPILL[(start + q) % 8]; }
+  }
+  return best;
+}
+
 // highest surface under a point (for landing): static cubes, corner triangles, then any pile of fallen cubes
 function floorAt(x, z, bottom) {
   const i = Math.round(x), j = Math.round(z);
@@ -507,6 +532,7 @@ function updateWobble(dt, t) {
 // ------------------------------------------------------------------ physics
 function physics(dt) {
   const r = hole.r;
+  let sd = null;
   let w = 0;
   for (let a = 0; a < active.length; a++) {
     const n = active[a];
@@ -567,6 +593,12 @@ function physics(dt) {
           if (vy[n] < -5) {
             if (s > 1 && vy[n] < -9) shake = Math.min(1, shake + 0.12 * s);
             vy[n] *= -0.22; vx[n] *= 0.6; vz[n] *= 0.6; wx[n] *= 0.5; wz[n] *= 0.5;
+          } else if (spillCount[n] < 16 && (sd = spillDir(x, z, f, s))) {
+            // the spot next door is lower: tip off the pile and pour that way, like sand or water
+            spillCount[n]++;
+            const L = Math.hypot(sd[0], sd[1]);
+            vx[n] = (sd[0] / L) * 4; vz[n] = (sd[1] / L) * 4; vy[n] = 1.5;
+            y = f + h + 0.05;
           } else {
             state[n] = 2; captured[n] = 0; vx[n] = vy[n] = vz[n] = 0;
             // settle square on the grid so piles stack neatly
@@ -809,6 +841,8 @@ const startEl = document.getElementById('start');
 const winEl = document.getElementById('win');
 const cardsEl = document.getElementById('cards');
 let playing = false, won = false, elapsed = 0, saveT = 0;
+const bestTimes = () => { try { return JSON.parse(localStorage.getItem('void-best') || '{}'); } catch (e) { return {}; } };
+const fmtTime = (secs) => `${Math.floor(secs / 60)}m ${String(secs % 60).padStart(2, '0')}s`;
 const cleared = () => { try { return JSON.parse(localStorage.getItem('void-cleared') || '{}'); } catch (e) { return {}; } };
 // ---- saving a map in progress (per map, in this browser only)
 const saveKey = (id) => 'void-save-' + id;
@@ -871,8 +905,11 @@ function renderCards() {
     wrap.className = 'card-wrap';
     const b = document.createElement('button');
     b.className = 'card card-' + id;
-    const tag = sv ? `Resume · ${sv.pct}% cleared` : done[id] ? 'Cleared ✓' : m.tagline;
-    b.innerHTML = `<span class="art"></span><span class="name">${m.name}</span><span class="tag${sv ? ' resume' : ''}">${tag}</span>`;
+    const best = bestTimes()[id];
+    const tag = sv ? `Resume · ${sv.pct}% cleared` : m.tagline;
+    const badge = done[id] ? '<span class="badge" aria-label="Cleared">✓</span>' : '';
+    const bestLine = done[id] ? `<span class="best">Cleared${best ? ' · best ' + fmtTime(best) : ''}</span>` : '';
+    b.innerHTML = `<span class="art">${badge}</span><span class="name">${m.name}</span><span class="tag${sv ? ' resume' : ''}">${tag}</span>${bestLine}`;
     b.addEventListener('click', () => play(id));
     wrap.appendChild(b);
     if (sv) {
@@ -919,9 +956,12 @@ function win() {
   clearSave(world.id);
   try { const c = cleared(); c[world.id] = true; localStorage.setItem('void-cleared', JSON.stringify(c)); } catch (e) {}
   const secs = Math.round(elapsed);
-  document.getElementById('win-title').textContent = 'All clear';
+  const bests = bestTimes(), prev = bests[world.id];
+  const newBest = !prev || secs < prev;
+  if (newBest) { bests[world.id] = secs; try { localStorage.setItem('void-best', JSON.stringify(bests)); } catch (e) {} }
+  document.getElementById('win-title').textContent = newBest && prev ? 'New best!' : 'All clear';
   document.getElementById('win-text').textContent = world.win;
-  document.getElementById('win-stats').textContent = `${totalVol.toLocaleString()} cubes · ${Math.floor(secs / 60)}m ${String(secs % 60).padStart(2, '0')}s`;
+  document.getElementById('win-stats').textContent = `${totalVol.toLocaleString()} cubes · ${fmtTime(secs)}${prev && !newBest ? ' · best ' + fmtTime(prev) : ''}`;
   const other = MAP_ORDER[(MAP_ORDER.indexOf(world.id) + 1) % MAP_ORDER.length];
   const nextBtn = document.getElementById('next');
   nextBtn.textContent = `Try the ${MAPS[other].name}`;
@@ -1048,6 +1088,7 @@ window.__void = {
   get level() { return hole.level; }, get remaining() { return remainingPieces; }, get eaten() { return eatenVol; },
   get total() { return totalVol; }, get N() { return N; }, get active() { return active.length; }, get map() { return world.id; },
   start: (id = 'farm') => play(id), thresholds: () => thresholds.slice(),
+  maxPile: () => { let m = 0; for (const v of pileH.values()) m = Math.max(m, v); return m; }, resting: () => { let c = 0; for (let n = 0; n < N; n++) if (state[n] === 2) c++; return c; },
 };
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {

@@ -77,6 +77,13 @@ const P = [
   ['timber', '#7a5236', 'brown'], ['barrel', '#a06a3e', 'brown'], ['crate', '#c08a52', 'brown'],
   ['dragon', '#4fa36a', 'green'], ['dragonDark', '#3b8a58', 'green'], ['dragonBelly', '#e8d27a', 'yellow'],
   ['ember', '#ff8a3d', 'orange'], ['tentPurple', '#9b7ae0', 'purple'],
+  // stadium
+  ['dirt', '#c98e5a', 'brown'], ['dirtDark', '#b57c4c', 'brown'], ['chalk', '#ffffff', 'white'],
+  ['padGreen', '#2f6b45', 'green'], ['ivy', '#3f8a4f', 'green'], ['turf', '#5fb85a', 'green'],
+  ['seatBlue', '#3d6fd1', 'blue'], ['teamNavy', '#2d3e70', 'blue'], ['teamRed', '#d64541', 'red'],
+  ['concrete', '#a7a9ad', 'gray'], ['concreteDark', '#8f9196', 'gray'], ['board', '#23272f', 'gray'],
+  ['skin', '#f1c79a', 'orange'], ['skin2', '#c98f62', 'orange'], ['mustard', '#f2c230', 'yellow'],
+  ['bun', '#e8b56a', 'yellow'], ['foamFinger', '#ff7a2f', 'orange'],
 ];
 
 export const COLORS = P.map(([name, hex, group]) => ({ name, hex, group }));

@@ -49,12 +49,14 @@
   .panel { padding-inline: max(16px, env(safe-area-inset-left)); max-width: 460px; }
   .screen h1.small { font-size: 40px; letter-spacing: 4px; }
   #cards { display: grid; gap: 12px; width: min(340px, 86vw); margin: 0 auto; }
-  .card { display: grid; grid-template-columns: 64px 1fr; grid-template-rows: auto auto; column-gap: 14px; align-items: center; text-align: left; padding: 12px 16px 12px 12px; border: 0; border-radius: 18px; background: rgba(255,255,255,.82); box-shadow: 0 6px 18px rgba(30,40,80,.14); font-family: inherit; color: var(--ink); cursor: pointer; transition: transform .15s; }
+  .card { display: grid; grid-template-columns: 64px 1fr; grid-template-rows: auto auto auto; align-content: center; column-gap: 14px; align-items: center; text-align: left; padding: 12px 16px 12px 12px; border: 0; border-radius: 18px; background: rgba(255,255,255,.82); box-shadow: 0 6px 18px rgba(30,40,80,.14); font-family: inherit; color: var(--ink); cursor: pointer; transition: transform .15s; }
   .card:active { transform: scale(.97); }
   .card:focus-visible, .pill:focus-visible { outline: 3px solid #ff9b3d; outline-offset: 3px; }
-  .card .art { grid-row: 1 / 3; width: 64px; height: 64px; border-radius: 14px; position: relative; overflow: hidden; }
+  .card .art { grid-row: 1 / 4; width: 64px; height: 64px; border-radius: 14px; position: relative; overflow: hidden; }
   .card .name { font-size: 20px; font-weight: 900; letter-spacing: .5px; }
   .card .tag { font-size: 13px; font-weight: 600; opacity: .7; }
+  .card .best { font-size: 12px; font-weight: 800; color: #2f8a4c; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .card .badge { position: absolute; right: 3px; top: 3px; z-index: 2; width: 20px; height: 20px; border-radius: 50%; background: #ffc83d; color: #2a2f45; font-size: 13px; font-weight: 900; line-height: 20px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
   .card-farm .art { background: linear-gradient(#bfe3f6 0 38%, #9fd47c 38%); }
   .card-farm .art::before { content: ""; position: absolute; left: 12px; top: 16px; width: 24px; height: 22px; background: #e0605a; box-shadow: 0 -8px 0 -2px #8c5a52, 26px 4px 0 -6px #f2cf6b, 30px 12px 0 -6px #f2cf6b; border-radius: 3px; }
   .card-farm .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea; }
@@ -67,9 +69,22 @@
   .card-castle .art { background: linear-gradient(#cfe9f7 0 40%, #93cf6e 40%); }
   .card-castle .art::before { content: ""; position: absolute; left: 10px; top: 14px; width: 44px; height: 22px; background: #c4bfb5; box-shadow: 0 -6px 0 -1px #c4bfb5; clip-path: polygon(0 0, 10% 0, 10% 20%, 25% 20%, 25% 0, 40% 0, 40% 20%, 60% 20%, 60% 0, 75% 0, 75% 20%, 90% 20%, 90% 0, 100% 0, 100% 100%, 0 100%); }
   .card-castle .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea, 10px -26px 0 -4px #c9443f; }
+  .card-stadium .art { background: repeating-linear-gradient(135deg, #5fb85a 0 8px, #69c264 8px 16px); }
+  .card-stadium .art::before { content: ""; position: absolute; left: 22px; top: 12px; width: 20px; height: 20px; background: #c98e5a; transform: rotate(45deg); box-shadow: inset 0 0 0 5px #c98e5a, inset 0 0 0 20px #5fb85a; border: 2px solid #fff; }
+  .card-stadium .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea; }
   .stats { font-size: 14px; font-weight: 800; opacity: .7; margin: -18px 0 26px; font-variant-numeric: tabular-nums; }
   .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .pill.ghost { background: rgba(255,255,255,.8); color: #2a2f45; }
+  .screen { overflow-y: auto; }
+  .screen > .panel { padding-block: 16px; }
+  @media (max-height: 860px) {
+    .screen h1 { font-size: 48px; }
+    .hole-ic { width: 96px; height: 36px; margin-bottom: 14px; }
+    .screen p { margin-bottom: 18px; }
+    #cards { gap: 9px; }
+    .card { padding-block: 9px; }
+    .card .art { width: 56px; height: 56px; }
+  }
   .card-wrap { display: grid; gap: 4px; }
   .card .tag.resume { color: #c76a12; opacity: 1; font-weight: 800; }
   .restart { justify-self: end; border: 0; background: none; color: var(--ink); opacity: .65; font: 700 13px/1 inherit; font-family: inherit; padding: 6px 8px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

@@ -245,3 +245,44 @@ the castle is awsome.
 the updated Reef and jellyfish look great. thanks for that update.
 
 is the game board a fixed square in a fixed position? the baseball stadium, normally a diamond, could be rendered on a diamond floor by turning 45°. how complicated is this.
+
+PHASE 5 (Nov 2) — from Todd's notes
+-----------------------------------
+- [Todd] tall stacks: the shimmer fix stacked every falling cube in one
+  column, so a tree crown became a 30-cube tower. Now a cube that lands
+  on top of a pile tips off toward the lowest neighbouring spot (at least
+  one cube lower) and keeps pouring until it settles, like sand or water.
+  It naturally flows away from whatever is still standing. Playtest: the
+  tallest pile on Farm, Valley and Castle stayed at 1-2 cubes.
+- Map cards: the description always shows now. A cleared map gets a gold
+  check badge on its picture and a green "Cleared · best 12m 45s" line.
+  Best times are kept per map on that phone; the win screen says
+  "New best!" when you beat it and shows your best otherwise.
+- The start screen scrolls and tightens up on shorter screens so all the
+  map cards fit.
+- [Todd] board orientation: the board stays a fixed square; the Stadium
+  lays the diamond out diagonally instead (home plate near the bottom).
+
+Fifth map: Stadium
+- Ballpark seen from behind home plate: dirt infield, base paths, bases,
+  home plate, batter's boxes, pitcher's mound with rubber, chalk foul
+  lines to yellow foul poles.
+- Mowed outfield stripes (ground shader option: map.stripes = true).
+- Packed stands down both lines (tiers with a colourful crowd and blue
+  empty seats, concrete aisles), seats behind a padded backstop, and
+  outfield bleachers.
+- Green padded outfield wall with a yellow top and team pennants.
+- Players in position (home team in white and navy, the batter in red,
+  catcher crouched, umpire in black) and the visitors in their dugout.
+- Scoreboard in centre field spelling VOID in lights, four light towers.
+- Treats: a hot dog cart with a giant hot dog on top, a giant baseball
+  on a plinth, and a giant "#1" foam finger.
+- About 21,000 unit cubes (9,200 pieces). Bot cleared it with no errors.
+
+NEXT
+----
+- Todd wants to talk about a brand-new game next (Todd describes, Claude
+  builds).
+- Map ideas still open: beach (umbrella, cabana, sand castle, crabs),
+  airport.
+
