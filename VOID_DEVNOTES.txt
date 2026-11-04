@@ -286,3 +286,14 @@ NEXT
 - Map ideas still open: beach (umbrella, cabana, sand castle, crabs),
   airport.
 ethe stadium is nice. we have introduced an explosion of cubes as the rim of the hole passes under a column of cubes. they get in a hurry to move horizontally when a vertical fall is available. play it and watch moving slow through the stadium stands. with a level 4 or 5 hole, passing under a stadium light the whole stack should just fall straight down, but it now breaks up, bends and wobbles.
+
+PHASE 5.1 (Nov 3) — falling stacks
+----------------------------------
+- [Todd] cubes burst sideways when the hole passed under a tall column.
+  Cause: every released cube got its own random sideways push and spin, and
+  the hole pulled even high-up cubes toward its middle.
+- Now cubes above ground level drop straight down with almost no spin, so a
+  light tower or castle tower falls as a stack; only cubes on the ground get
+  a gentle roll toward the middle, and the pull toward the middle only kicks
+  in once a cube is down near the ground. Bot re-cleared Stadium and Castle.
+

@@ -360,11 +360,15 @@ function release(n, inward) {
   state[n] = 1;
   captured[n] = inward ? 1 : 0;
   const dx = hole.x - cx[n], dz = hole.z - cz[n], d = Math.hypot(dx, dz) || 1;
-  const s = inward ? 1.2 + Math.random() * 1.2 : 0.4;
-  vx[n] = (dx / d) * s + (Math.random() - 0.5) * 0.8;
-  vz[n] = (dz / d) * s + (Math.random() - 0.5) * 0.8;
-  vy[n] = Math.random() * 0.6;
-  const spin = sz[n] > 1 ? 0.45 : 1;
+  // cubes sitting on the ground get a gentle roll toward the middle; cubes higher up a stack
+  // just drop straight down, so towers fall as a stack instead of bursting apart
+  const low = gk[n] < 1;
+  const s = inward && low ? 0.5 + Math.random() * 0.6 : 0;
+  const jig = low ? 0.3 : 0.04;
+  vx[n] = (dx / d) * s + (Math.random() - 0.5) * jig;
+  vz[n] = (dz / d) * s + (Math.random() - 0.5) * jig;
+  vy[n] = low ? Math.random() * 0.3 : 0;
+  const spin = (sz[n] > 1 ? 0.45 : 1) * (low ? 0.6 : 0.12);
   wx[n] = (Math.random() - 0.5) * 7 * spin; wy[n] = (Math.random() - 0.5) * 4 * spin; wz[n] = (Math.random() - 0.5) * 7 * spin;
   rx[n] = ry[n] = rz[n] = 0;
   if (active.length < DYN_MAX) active.push(n);
@@ -566,7 +570,8 @@ function physics(dt) {
       const bottom = y - h;
       if (bottom < -0.2 && d < r + 0.2) {
         vx[n] += ux * 8 * dt; vz[n] += uz * 8 * dt;
-      } else if (d < r + 1.6) {
+      } else if (d < r + 1.6 && bottom < 1.2) {
+        // only pull toward the middle once a cube is down near the ground
         const sp = (1 - Math.max(0, d - r) / 1.6) * 7 * dt;
         vx[n] += ux * sp; vz[n] += uz * sp;
       }
