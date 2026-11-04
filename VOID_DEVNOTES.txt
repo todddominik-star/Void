@@ -285,4 +285,4 @@ NEXT
   builds).
 - Map ideas still open: beach (umbrella, cabana, sand castle, crabs),
   airport.
-
+ethe stadium is nice. we have introduced an explosion of cubes as the rim of the hole passes under a column of cubes. they get in a hurry to move horizontally when a vertical fall is available. play it and watch moving slow through the stadium stands. with a level 4 or 5 hole, passing under a stadium light the whole stack should just fall straight down, but it now breaks up, bends and wobbles.
