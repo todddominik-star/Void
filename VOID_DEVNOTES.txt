@@ -297,3 +297,22 @@ PHASE 5.1 (Nov 3) — falling stacks
   a gentle roll toward the middle, and the pull toward the middle only kicks
   in once a cube is down near the ground. Bot re-cleared Stadium and Castle.
 
+PHASE 6 (Nov 3, late) — Sixth map: Beach
+----------------------------------------
+- Warm sand at the front where the hole starts; the sea at the back is
+  painted by the ground shader (map.beach = true): a wobbling shoreline,
+  lapping white foam, wet sand, deeper blue further out, soft ripples.
+- Towels and striped umbrellas, beach balls, buckets and spades, crabs
+  (with eyes on stalks), shells scattered on the sand.
+- A giant sand castle in the middle: moat, little bridge, walls with
+  crenellations, four towers with red flags, a keep with a seashell crown
+  and the tallest flag (mostly 4x blocks).
+- West: three striped cabanas, palm trees with coconuts, an ice cream
+  stand with a giant cone on the roof.
+- East: a lifeguard tower with a ramp and flag, a volleyball net, three
+  surfboards in the sand, coolers.
+- The sea: a wooden pier with a lamp at the end, a sailboat, a rowboat, a
+  giant rubber duck, buoys, swim rings, two leaping dolphins, and a
+  striped lighthouse on rocks. Seagulls hang over the sand.
+- About 10,000 unit cubes (6,600 pieces). Bot cleared it with no errors.
+

@@ -84,6 +84,13 @@ const P = [
   ['concrete', '#a7a9ad', 'gray'], ['concreteDark', '#8f9196', 'gray'], ['board', '#23272f', 'gray'],
   ['skin', '#f1c79a', 'orange'], ['skin2', '#c98f62', 'orange'], ['mustard', '#f2c230', 'yellow'],
   ['bun', '#e8b56a', 'yellow'], ['foamFinger', '#ff7a2f', 'orange'],
+  // beach
+  ['castleSand', '#ecd394', 'sand'], ['castleSand2', '#dcbf7c', 'sand'], ['wetSand', '#c9ab6c', 'sand'],
+  ['crab', '#ea5a3f', 'red'], ['palmTrunk', '#a57a4f', 'brown'], ['palm', '#47ad55', 'green'], ['palm2', '#3a9a4a', 'green'],
+  ['towelTeal', '#3cc4c0', 'blue'], ['towelPink', '#ff8fb3', 'pink'], ['towelYellow', '#ffd447', 'yellow'],
+  ['ball', '#ffffff', 'white'], ['sail', '#fafafa', 'white'], ['hull', '#2f5fa8', 'blue'], ['dolphin', '#7f9bb5', 'gray'],
+  ['gull', '#fdfdfd', 'white'], ['gullWing', '#9aa3ad', 'gray'], ['iceCream', '#ffc2d6', 'pink'], ['mint', '#a8e6cf', 'green'],
+  ['duckToy', '#ffd23f', 'yellow'], ['lighthouse', '#e04a45', 'red'],
 ];
 
 export const COLORS = P.map(([name, hex, group]) => ({ name, hex, group }));

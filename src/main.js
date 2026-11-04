@@ -7,9 +7,10 @@ import { REEF } from './reef.js';
 import { VALLEY } from './valley.js';
 import { CASTLE } from './castle.js';
 import { STADIUM } from './stadium.js';
+import { BEACH } from './beach.js';
 
-const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE, stadium: STADIUM };
-const MAP_ORDER = ['farm', 'reef', 'valley', 'castle', 'stadium'];
+const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE, stadium: STADIUM, beach: BEACH };
+const MAP_ORDER = ['farm', 'reef', 'valley', 'castle', 'stadium', 'beach'];
 
 // ------------------------------------------------------------------ tuning
 const RADII = [1.6, 2.1, 2.7, 3.4, 4.2, 5.2, 6.4, 7.8, 9.4]; // hole radius per size
@@ -50,6 +51,7 @@ const holeUniform = { value: new THREE.Vector3(hole.x, hole.z, hole.r) };
 const timeUniform = { value: 0 };
 const causticUniform = { value: 0 };
 const stripeUniform = { value: 0 };
+const beachUniform = { value: 0 };
 
 // ------------------------------------------------------------------ ground
 const groundMat = new THREE.MeshLambertMaterial({ color: '#9fd47c' });
@@ -58,9 +60,10 @@ groundMat.onBeforeCompile = (s) => {
   s.uniforms.uTime = timeUniform;
   s.uniforms.uCaustic = causticUniform;
   s.uniforms.uStripes = stripeUniform;
+  s.uniforms.uBeach = beachUniform;
   s.vertexShader = 'varying vec3 vWPos;\n' + s.vertexShader.replace('#include <begin_vertex>',
     '#include <begin_vertex>\n vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-  s.fragmentShader = 'uniform vec3 uHole;\nuniform float uTime;\nuniform float uCaustic;\nuniform float uStripes;\nvarying vec3 vWPos;\n' + s.fragmentShader
+  s.fragmentShader = 'uniform vec3 uHole;\nuniform float uTime;\nuniform float uCaustic;\nuniform float uStripes;\nuniform float uBeach;\nvarying vec3 vWPos;\n' + s.fragmentShader
     .replace('void main() {', 'void main() {\n float dh = distance(vWPos.xz, uHole.xy);\n if (dh < uHole.z) discard;')
     .replace('#include <color_fragment>', `#include <color_fragment>
       vec2 t = floor(vWPos.xz / 2.0 + 0.25);
@@ -73,6 +76,21 @@ groundMat.onBeforeCompile = (s) => {
         // mowed lawn: wide diagonal bands, two shades of green
         float band = mod(floor((vWPos.x - vWPos.z) / 7.0), 2.0);
         diffuseColor.rgb *= mix(0.88, 1.07, band);
+      }
+      if (uBeach > 0.5) {
+        // the sea at the back of the board, with a wobbling shoreline and lapping foam
+        float shore = -16.0 + sin(vWPos.x * 0.07) * 3.0 + sin(vWPos.x * 0.19 + 1.0) * 1.5;
+        float lap = shore + sin(uTime * 1.1 + vWPos.x * 0.13) * 0.6;
+        float into = lap - vWPos.z;
+        if (into > 0.0) {
+          vec3 sea = mix(vec3(0.56, 0.87, 0.93), vec3(0.24, 0.6, 0.85), smoothstep(0.0, 26.0, into));
+          float ripple = sin(vWPos.x * 0.5 + uTime * 0.8) * sin(vWPos.z * 0.6 - uTime * 0.6);
+          sea += vec3(0.06) * smoothstep(0.6, 1.0, ripple);
+          sea = mix(vec3(0.97, 0.99, 1.0), sea, smoothstep(0.0, 1.3, into));
+          diffuseColor.rgb = sea;
+        } else {
+          diffuseColor.rgb *= mix(0.82, 1.0, smoothstep(0.0, 3.5, -into)); // wet sand by the water
+        }
       }
       if (uCaustic > 0.5) {
         vec2 p = vWPos.xz * 0.35;
@@ -268,6 +286,7 @@ function loadWorld(id) {
   sun.color.setHex(world.sun);
   causticUniform.value = world.caustics ? 1 : 0;
   stripeUniform.value = world.stripes ? 1 : 0;
+  beachUniform.value = world.beach ? 1 : 0;
   bubbleMesh.visible = !!world.bubbles;
   document.body.style.background = world.bg;
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', world.sky);
