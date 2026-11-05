@@ -316,3 +316,9 @@ PHASE 6 (Nov 3, late) — Sixth map: Beach
   striped lighthouse on rocks. Seagulls hang over the sand.
 - About 10,000 unit cubes (6,600 pieces). Bot cleared it with no errors.
 
+
+PHASE 6.1 — falling cubes drop straight
+- Anything left hanging (the sunflower heads, tree tops, signs) now drops
+  straight down when its support is swallowed: no sideways kick, no spin.
+- Cubes only slide off a pile of fallen cubes, slowly and without a hop,
+  so nothing gets launched across the map.

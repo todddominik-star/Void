@@ -443,11 +443,11 @@ function supportCheck() {
     if (grounded) {
       for (const n of queue) visitStamp[n] = -stamp;
     } else {
-      const kick = [(Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.6];
+      // nothing holds it up any more: the whole piece drops straight down, no kick, no spin
       for (const n of queue) {
         release(n, false);
-        vx[n] = kick[0] + (Math.random() - 0.5) * 0.3; vz[n] = kick[1] + (Math.random() - 0.5) * 0.3; vy[n] = 0;
-        wx[n] *= 0.35; wy[n] *= 0.35; wz[n] *= 0.35;
+        vx[n] = vz[n] = vy[n] = 0;
+        wx[n] = wy[n] = wz[n] = 0;
       }
     }
   }
@@ -617,12 +617,13 @@ function physics(dt) {
           if (vy[n] < -5) {
             if (s > 1 && vy[n] < -9) shake = Math.min(1, shake + 0.12 * s);
             vy[n] *= -0.22; vx[n] *= 0.6; vz[n] *= 0.6; wx[n] *= 0.5; wz[n] *= 0.5;
-          } else if (spillCount[n] < 16 && (sd = spillDir(x, z, f, s))) {
-            // the spot next door is lower: tip off the pile and pour that way, like sand or water
+          } else if (spillCount[n] < 16 && (pileH.get(keyAt(x, z)) || 0) > 0 && (sd = spillDir(x, z, f, s))) {
+            // landed on a pile of fallen cubes and the spot next door is lower: slide gently off it.
+            // (cubes that land on a ledge of something still standing just rest there)
             spillCount[n]++;
             const L = Math.hypot(sd[0], sd[1]);
-            vx[n] = (sd[0] / L) * 4; vz[n] = (sd[1] / L) * 4; vy[n] = 1.5;
-            y = f + h + 0.05;
+            vx[n] = (sd[0] / L) * 1.8; vz[n] = (sd[1] / L) * 1.8; vy[n] = 0;
+            y = f + h + 0.02;
           } else {
             state[n] = 2; captured[n] = 0; vx[n] = vy[n] = vz[n] = 0;
             // settle square on the grid so piles stack neatly
