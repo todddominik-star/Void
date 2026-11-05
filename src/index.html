@@ -88,6 +88,12 @@
     .card { padding-block: 9px; }
     .card .art { width: 56px; height: 56px; }
   }
+  .card-haunted .art { background: linear-gradient(#2b2550, #4a4372 60%, #5d6a58 60%); }
+  .card-haunted .art::before { content: ""; position: absolute; left: 20px; top: 8px; width: 12px; height: 30px; background: #8a8882; box-shadow: -10px 10px 0 0 #8a8882, 10px 10px 0 0 #8a8882, 0 -6px 0 -2px #3d3846, 30px -2px 0 -3px #f6eec8; }
+  .card-haunted .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea, 22px -12px 0 -2px #f39a3d; }
+  .card-airport .art { background: linear-gradient(#bfe3f6 0 42%, #8fcf6c 42% 58%, #777d87 58%); }
+  .card-airport .art::before { content: ""; position: absolute; left: 12px; top: 10px; width: 34px; height: 6px; border-radius: 3px; background: #f6f8fb; box-shadow: 10px -5px 0 -1px #2f6fd1, 4px 4px 0 -1px #2f6fd1; }
+  .card-airport .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea; }
   .card-wrap { display: grid; gap: 4px; }
   .card .tag.resume { color: #c76a12; opacity: 1; font-weight: 800; }
   .restart { justify-self: end; border: 0; background: none; color: var(--ink); opacity: .65; font: 700 13px/1 inherit; font-family: inherit; padding: 6px 8px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

@@ -8,9 +8,11 @@ import { VALLEY } from './valley.js';
 import { CASTLE } from './castle.js';
 import { STADIUM } from './stadium.js';
 import { BEACH } from './beach.js';
+import { HAUNTED } from './haunted.js';
+import { AIRPORT } from './airport.js';
 
-const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE, stadium: STADIUM, beach: BEACH };
-const MAP_ORDER = ['farm', 'reef', 'valley', 'castle', 'stadium', 'beach'];
+const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE, stadium: STADIUM, beach: BEACH, haunted: HAUNTED, airport: AIRPORT };
+const MAP_ORDER = ['farm', 'reef', 'valley', 'castle', 'stadium', 'beach', 'haunted', 'airport'];
 
 // ------------------------------------------------------------------ tuning
 const RADII = [1.6, 2.1, 2.7, 3.4, 4.2, 5.2, 6.4, 7.8, 9.4]; // hole radius per size
@@ -52,6 +54,9 @@ const timeUniform = { value: 0 };
 const causticUniform = { value: 0 };
 const stripeUniform = { value: 0 };
 const beachUniform = { value: 0 };
+const mistUniform = { value: 0 };
+const airportUniform = { value: 0 };
+const glowUniform = { value: 1.5 };
 
 // ------------------------------------------------------------------ ground
 const groundMat = new THREE.MeshLambertMaterial({ color: '#9fd47c' });
@@ -61,9 +66,11 @@ groundMat.onBeforeCompile = (s) => {
   s.uniforms.uCaustic = causticUniform;
   s.uniforms.uStripes = stripeUniform;
   s.uniforms.uBeach = beachUniform;
+  s.uniforms.uMist = mistUniform;
+  s.uniforms.uAirport = airportUniform;
   s.vertexShader = 'varying vec3 vWPos;\n' + s.vertexShader.replace('#include <begin_vertex>',
     '#include <begin_vertex>\n vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-  s.fragmentShader = 'uniform vec3 uHole;\nuniform float uTime;\nuniform float uCaustic;\nuniform float uStripes;\nuniform float uBeach;\nvarying vec3 vWPos;\n' + s.fragmentShader
+  s.fragmentShader = 'uniform vec3 uHole;\nuniform float uTime;\nuniform float uCaustic;\nuniform float uStripes;\nuniform float uBeach;\nuniform float uMist;\nuniform float uAirport;\nvarying vec3 vWPos;\n' + s.fragmentShader
     .replace('void main() {', 'void main() {\n float dh = distance(vWPos.xz, uHole.xy);\n if (dh < uHole.z) discard;')
     .replace('#include <color_fragment>', `#include <color_fragment>
       vec2 t = floor(vWPos.xz / 2.0 + 0.25);
@@ -91,6 +98,59 @@ groundMat.onBeforeCompile = (s) => {
         } else {
           diffuseColor.rgb *= mix(0.82, 1.0, smoothstep(0.0, 3.5, -into)); // wet sand by the water
         }
+      }
+      if (uAirport > 0.5) {
+        // runway across the back, two taxiways down to a deep apron in front of the terminal,
+        // a curbside road and a parking lot at the front
+        vec3 tar = vec3(0.47, 0.49, 0.53);
+        vec2 w = vWPos.xz;
+        float rw = step(-52.5, w.y) * step(w.y, -39.5);
+        float tx = step(abs(w.x - 44.0), 3.5) * step(-39.5, w.y) * step(w.y, -22.0);
+        float tx2 = step(abs(w.x + 46.0), 3.5) * step(-39.5, w.y) * step(w.y, -22.0);
+        float ap = step(abs(w.x + 2.0), 56.0) * step(-22.0, w.y) * step(w.y, 13.0);
+        if (rw + tx + ap + tx2 > 0.5) {
+          diffuseColor.rgb = tar * (0.97 + 0.03 * ch);
+          if (rw > 0.5) {
+            float cl = step(abs(w.y + 46.0), 0.35) * step(0.5, fract(w.x / 8.0)) * step(abs(w.x), 50.0);
+            float edge = step(abs(abs(w.y + 46.0) - 5.6), 0.3);
+            float keys = step(53.0, abs(w.x)) * step(abs(w.y + 46.0), 4.6) * step(0.5, fract(w.y / 1.6));
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.97), max(max(cl, edge), keys));
+          } else if (tx + tx2 > 0.5) {
+            float yl = step(abs(w.x - 44.0), 0.25) + step(abs(w.x + 46.0), 0.25);
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.98, 0.82, 0.25), yl);
+          } else {
+            // yellow lead-in lines to each gate, and a service road line
+            float lead = (step(abs(w.x + 24.0), 0.25) + step(abs(w.x - 4.0), 0.25) + step(abs(w.x - 32.0), 0.25)) * step(w.y, 4.0);
+            float svc = step(abs(w.y - 9.0), 0.25) * step(0.5, fract(w.x / 4.0));
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.98, 0.82, 0.25), clamp(lead + svc, 0.0, 1.0));
+          }
+        }
+        // curbside road
+        if (step(abs(w.x + 2.0), 52.0) * step(29.0, w.y) * step(w.y, 35.0) > 0.5) {
+          diffuseColor.rgb = vec3(0.42, 0.44, 0.48) * (0.97 + 0.03 * ch);
+          float dash = step(abs(w.y - 32.0), 0.2) * step(0.5, fract(w.x / 5.0));
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.97), dash);
+        }
+        // parking lot
+        if (step(abs(w.x + 4.0), 40.0) * step(37.0, w.y) * step(w.y, 59.0) > 0.5) {
+          diffuseColor.rgb = vec3(0.55, 0.56, 0.6) * (0.97 + 0.03 * ch);
+          float bay = step(abs(fract(w.x / 4.0) - 0.5), 0.04) * step(abs(abs(w.y - 48.0) - 6.0), 2.8);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95), bay);
+        }
+        // helipad
+        float hp = distance(w, vec2(46.0, 4.0));
+        if (hp < 6.0) {
+          diffuseColor.rgb = mix(vec3(0.42, 0.44, 0.48), vec3(0.97), step(abs(hp - 5.0), 0.35));
+          vec2 hq = abs(w - vec2(46.0, 4.0));
+          float H = step(hq.x, 2.0) * step(hq.y, 2.4) * (step(1.4, hq.x) + step(hq.y, 0.3));
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.97), clamp(H, 0.0, 1.0));
+        }
+      }
+      if (uMist > 0.5) {
+        // slow, drifting ground mist
+        vec2 q = vWPos.xz * 0.06;
+        float m = sin(q.x * 1.3 + uTime * 0.12 + sin(q.y * 1.7 + uTime * 0.09) * 1.5) * sin(q.y * 1.1 - uTime * 0.1 + sin(q.x * 0.9) * 1.2);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.62, 0.6, 0.78), smoothstep(0.15, 0.9, m) * 0.35);
       }
       if (uCaustic > 0.5) {
         vec2 p = vWPos.xz * 0.35;
@@ -239,12 +299,17 @@ function chamferedCube(c = 0.1) {
 }
 const cubeGeo = chamferedCube(0.1);
 const cubeMat = new THREE.MeshLambertMaterial();
+cubeMat.onBeforeCompile = (s) => {
+  s.uniforms.uGlow = glowUniform;
+  s.fragmentShader = 'uniform float uGlow;\n' + s.fragmentShader.replace('#include <opaque_fragment>', '#include <opaque_fragment>\n#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA )\n if (vColor.r > 1.5) gl_FragColor.rgb = pow(vColor.rgb - 2.0, vec3(1.6)) * uGlow;\n#endif');
+};
 const dynMat = new THREE.MeshLambertMaterial();
 dynMat.onBeforeCompile = (s) => {
+  s.uniforms.uGlow = glowUniform;
   s.vertexShader = 'varying float vWY;\n' + s.vertexShader.replace('#include <project_vertex>',
     '#include <project_vertex>\n vWY = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).y;');
-  s.fragmentShader = 'varying float vWY;\n' + s.fragmentShader.replace('#include <opaque_fragment>',
-    '#include <opaque_fragment>\n gl_FragColor.rgb *= clamp(1.0 + vWY * 0.28, 0.0, 1.0);');
+  s.fragmentShader = 'uniform float uGlow;\nvarying float vWY;\n' + s.fragmentShader.replace('#include <opaque_fragment>',
+    '#include <opaque_fragment>\n#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA )\n if (vColor.r > 1.5) gl_FragColor.rgb = pow(vColor.rgb - 2.0, vec3(1.6)) * uGlow;\n#endif\n gl_FragColor.rgb *= clamp(1.0 + vWY * 0.28, 0.0, 1.0);');
 };
 const dynMesh = new THREE.InstancedMesh(cubeGeo, dynMat, DYN_MAX);
 dynMesh.castShadow = true; dynMesh.receiveShadow = true; dynMesh.frustumCulled = false;
@@ -284,6 +349,10 @@ function loadWorld(id) {
   scene.fog.color.set(world.sky);
   hemi.color.setHex(world.hemiSky); hemi.groundColor.setHex(world.hemiGround);
   sun.color.setHex(world.sun);
+  hemi.intensity = world.hemiI ?? 1.15; sun.intensity = world.sunI ?? 1.75;
+  mistUniform.value = world.mist ? 1 : 0;
+  airportUniform.value = world.airport ? 1 : 0;
+  glowUniform.value = world.glow ?? 1.5;
   causticUniform.value = world.caustics ? 1 : 0;
   stripeUniform.value = world.stripes ? 1 : 0;
   beachUniform.value = world.beach ? 1 : 0;
@@ -323,6 +392,7 @@ function loadWorld(id) {
     const h = Math.sin(n * 12.9898 + k * 78.233) * 43758.5453;
     const jitter = (s > 1 ? 0.97 : 0.94) + (h - Math.floor(h)) * (s > 1 ? 0.06 : 0.1);
     colR[n] = tmpC.r * jitter; colG[n] = tmpC.g * jitter; colB[n] = tmpC.b * jitter;
+    if (COLORS[c].glow) { colR[n] = tmpC.r + 2; colG[n] = tmpC.g + 2; colB[n] = tmpC.b + 2; } // self-lit
     const v = s * s * s;
     groupRemaining[COLORS[c].group] += v;
     totalVol += v;
@@ -765,21 +835,23 @@ addEventListener('keyup', (e) => (keys[e.key] = false));
 // ------------------------------------------------------------------ camera
 let viewWidth = 10, viewShort = 10, camDist = 20;
 const camTarget = new THREE.Vector3(hole.x, 0, hole.z);
+let peekCam = null; // test hook: look at (x, z) as if the hole were radius r
 function updateCamera(dt, snap = false) {
+  const H = peekCam || hole;
   const aspect = window.innerWidth / window.innerHeight;
   const vfov = THREE.MathUtils.degToRad(camera.fov);
   const hfov = 2 * Math.atan(Math.tan(vfov / 2) * aspect);
   const shortFov = Math.min(hfov, vfov);
-  const wantShort = VIEW_BASE + 2 * hole.r * VIEW_PER_HOLE;
+  const wantShort = VIEW_BASE + 2 * H.r * VIEW_PER_HOLE;
   const wantDist = wantShort / (2 * Math.tan(shortFov / 2));
   const k = snap ? 1 : 1 - Math.exp(-dt * 2.2);
   camDist += (wantDist - camDist) * k;
   viewWidth = 2 * camDist * Math.tan(hfov / 2);
   viewShort = 2 * camDist * Math.tan(shortFov / 2);
-  const ahead = hole.r * 0.9;
+  const ahead = H.r * 0.9;
   const tk = snap ? 1 : 1 - Math.exp(-dt * 8);
-  camTarget.x += (hole.x - camTarget.x) * tk;
-  camTarget.z += (hole.z - ahead - camTarget.z) * tk;
+  camTarget.x += (H.x - camTarget.x) * tk;
+  camTarget.z += (H.z - ahead - camTarget.z) * tk;
   const sh = snap ? 0 : shake * shake * 0.35;
   camera.position.set(camTarget.x + (Math.random() - 0.5) * sh, Math.sin(PITCH) * camDist + (Math.random() - 0.5) * sh, camTarget.z + Math.cos(PITCH) * camDist);
   camera.lookAt(camTarget);
@@ -1109,7 +1181,7 @@ function nearestRemaining() {
   return n < 0 ? null : [cx[n], cz[n]];
 }
 window.__void = {
-  snap: () => updateCamera(0, true), stepSim, nearestRemaining, hole,
+  snap: () => updateCamera(0, true), stepSim, peek: (x, z, r) => { peekCam = x == null ? null : { x, z, r }; updateCamera(0, true); }, nearestRemaining, hole,
   get level() { return hole.level; }, get remaining() { return remainingPieces; }, get eaten() { return eatenVol; },
   get total() { return totalVol; }, get N() { return N; }, get active() { return active.length; }, get map() { return world.id; },
   start: (id = 'farm') => play(id), thresholds: () => thresholds.slice(),

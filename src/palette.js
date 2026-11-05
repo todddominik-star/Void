@@ -91,8 +91,26 @@ const P = [
   ['ball', '#ffffff', 'white'], ['sail', '#fafafa', 'white'], ['hull', '#2f5fa8', 'blue'], ['dolphin', '#7f9bb5', 'gray'],
   ['gull', '#fdfdfd', 'white'], ['gullWing', '#9aa3ad', 'gray'], ['iceCream', '#ffc2d6', 'pink'], ['mint', '#a8e6cf', 'green'],
   ['duckToy', '#ffd23f', 'yellow'], ['lighthouse', '#e04a45', 'red'],
+  // haunted (a 4th value of true = glows in the dark)
+  ['siding', '#aeaba3', 'gray'], ['siding2', '#9b988f', 'gray'], ['sidingDark', '#76736c', 'gray'],
+  ['shingle', '#5e5670', 'purple'], ['shingle2', '#4b445b', 'purple'], ['porch', '#6a5d50', 'brown'],
+  ['plank', '#8b7658', 'brown'], ['lattice', '#5e5448', 'brown'], ['bark', '#62504a', 'brown'], ['bark2', '#4c3d36', 'brown'],
+  ['tomb', '#9095a0', 'gray'], ['tomb2', '#7a7f8a', 'gray'], ['tombMoss', '#6f8a6a', 'green'], ['grave', '#5a4636', 'brown'],
+  ['iron', '#2e2b36', 'gray'], ['bone', '#efe8d6', 'white'], ['bat', '#3a2e48', 'purple'], ['witch', '#2f2738', 'purple'],
+  ['witchSkin', '#86c46c', 'green'], ['cauldron', '#34333b', 'gray'], ['hauntGrass', '#55684f', 'green'], ['deadLeaf', '#b8733a', 'orange'],
+  ['candyWhite', '#fff6e0', 'white'], ['candyOrange', '#ff9a3a', 'orange'], ['candyPurple', '#8e5fd0', 'purple'],
+  ['glowOrange', '#ffa645', 'orange', true], ['glowGreen', '#86ff9a', 'green', true], ['glowPurple', '#cc8cff', 'purple', true],
+  ['glowYellow', '#ffe58a', 'yellow', true], ['ghost', '#c3d2ee', 'white', true], ['moon', '#f6eec8', 'yellow', true],
+  ['eyeRed', '#ff5a4a', 'red', true],
+  // airport
+  ['terminalWall', '#eef1f5', 'white'], ['glass', '#7cc6ea', 'blue'], ['glass2', '#5aa8d6', 'blue'], ['roofSteel', '#b9c3ce', 'gray'],
+  ['jetWhite', '#f6f8fb', 'white'], ['jetBlue', '#2f6fd1', 'blue'], ['jetTeal', '#25b3a6', 'green'], ['engine', '#707985', 'gray'],
+  ['cockpit', '#2f4258', 'gray'], ['tug', '#f2b631', 'yellow'], ['cart', '#5c6672', 'gray'], ['bag1', '#d9534f', 'red'],
+  ['bag2', '#4b78c9', 'blue'], ['bag3', '#3cb371', 'green'], ['bag4', '#8e5fd0', 'purple'], ['bag5', '#f4a23c', 'orange'],
+  ['taxi', '#ffcc2e', 'yellow'], ['cone', '#ff6a2a', 'orange'], ['hangar', '#cfd5dc', 'gray'], ['hangarRoof', '#97a2ae', 'gray'],
+  ['propRed', '#e5533f', 'red'], ['bus', '#2f8fd8', 'blue'], ['runLight', '#fff2a8', 'yellow'], ['jetRed', '#d8423c', 'red'],
 ];
 
-export const COLORS = P.map(([name, hex, group]) => ({ name, hex, group }));
+export const COLORS = P.map(([name, hex, group, glow]) => ({ name, hex, group, glow: !!glow }));
 export const C = {};
 COLORS.forEach((c, i) => (C[c.name] = i));

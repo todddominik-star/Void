@@ -322,3 +322,31 @@ PHASE 6.1 — falling cubes drop straight
   straight down when its support is swallowed: no sideways kick, no spin.
 - Cubes only slide off a pile of fallen cubes, slowly and without a hop,
   so nothing gets launched across the map.
+
+PHASE 7 — Haunted and Airport (maps 7 and 8)
+- Engine: colours can now glow in the dark (lit windows, ghosts, the moon,
+  jack-o-lantern faces). Each map can set its own light level. The ground
+  shader can paint drifting mist (Haunted) and runways, taxiways, apron,
+  road, parking lot and helipad (Airport).
+- HAUNTED (spooky dusk): a tall weathered Victorian house with a centre
+  tower that rises from the ground, a boarded-up window like the photo,
+  mansard roofs, dormers with orange "eye" windows, a porch wing with
+  balcony, and windows glowing orange, yellow, green and purple.
+  West: a fenced graveyard (headstones, crosses, obelisks, a leaning one,
+  skeleton hands) and a crypt with a glowing green door and a coffin.
+  East: a twisted tree with red glowing eyes in its bark, curling branches,
+  a hanging lantern, a dangling spider and crows; a crooked little
+  graveyard behind it. Front: a giant jack-o-lantern, a pumpkin patch with
+  a pumpkin-head scarecrow, a bubbling green cauldron with a broom, lamp
+  posts, an iron fence with a black cat, candy corn and wrapped candy.
+  Floating: 8 ghosts, a dozen bats, a witch on her broom, and the moon.
+  ~12,500 pieces. Bot cleared it, no errors.
+- AIRPORT (grass + tarmac): parking lot with two rows of cars, a curbside
+  road with a shuttle bus and taxis, a long glass terminal with skylights
+  and three jet bridges, three jets parked nose-in, two luggage-cart
+  trains, belt loaders, a fuel truck, stairs and catering trucks, cones.
+  East: control tower and a helicopter hovering over its helipad.
+  West: a hangar with a prop plane inside. Back: runway with two jets on
+  it, edge lights, a windsock. Floating: a small plane coming in to land
+  at the east end and one climbing out to the west, plus a few birds.
+  ~11,300 pieces. Bot cleared it, no errors.
