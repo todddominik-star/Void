@@ -219,15 +219,17 @@ ringGroup.add(rim);
 // progress ring: drawn a fixed number of screen pixels wide just outside the hole, at every size
 const progGroup = new THREE.Group();
 scene.add(progGroup);
-const ringMat = (color, opacity, order) => {
-  const m = new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, depthTest: false, fog: false });
-  return m;
-};
+// the ring lies on the floor: anything standing on it hides it (depth tested), and a faint
+// see-through copy (x-ray, about a quarter strength) still shows where it runs under things
+const ringMat = (color, opacity, xray = false) =>
+  new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, depthTest: !xray, fog: false });
 const outlineMat = ringMat('#2a2f45', 0.28), trackMat = ringMat('#ffffff', 0.55), fillMat = ringMat('#ffc83d', 1);
 const outline = new THREE.Mesh(new THREE.BufferGeometry(), outlineMat);
 const track = new THREE.Mesh(new THREE.BufferGeometry(), trackMat);
 const fill = new THREE.Mesh(new THREE.BufferGeometry(), fillMat);
-[outline, track, fill].forEach((m, i) => { m.rotation.x = -Math.PI / 2; m.position.y = 0.03; m.renderOrder = 10 + i; progGroup.add(m); });
+const xTrack = new THREE.Mesh(track.geometry, ringMat('#ffffff', 0.12, true));
+const xFill = new THREE.Mesh(fill.geometry, ringMat('#ffc83d', 0.25, true));
+[xTrack, xFill, outline, track, fill].forEach((m, i) => { m.rotation.x = -Math.PI / 2; m.position.y = 0.03; m.renderOrder = 10 + i; progGroup.add(m); });
 const RING_PX = 3, GAP_PX = 5, EDGE_PX = 1.2;
 let shownProgress = 0, builtProgress = -1, ringKey = '';
 function updateRing(p) {
@@ -246,6 +248,31 @@ function updateRing(p) {
   const len = Math.max(0.001, p * Math.PI * 2);
   fill.geometry.dispose();
   fill.geometry = new THREE.RingGeometry(progGroup.userData.inner, progGroup.userData.outer, 160, 1, Math.PI / 2 - len, len);
+  xTrack.geometry = track.geometry; xFill.geometry = fill.geometry;
+}
+
+// the hole's size, printed in soft grey on the far inside wall just under the rim
+const digitTex = {};
+function digitTexture(d) {
+  if (digitTex[d]) return digitTex[d];
+  const c = document.createElement('canvas'); c.width = 64; c.height = 96;
+  const g = c.getContext('2d');
+  g.font = '800 84px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffffff';
+  g.fillText(String(d), 32, 52);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return (digitTex[d] = t);
+}
+const digit = new THREE.Mesh(new THREE.PlaneGeometry(1, 1.5), new THREE.MeshBasicMaterial({ color: '#9aa0ad', transparent: true, opacity: 0.85, depthWrite: false, fog: false }));
+digit.renderOrder = 5;
+scene.add(digit);
+let digitShown = -1;
+function updateDigit() {
+  if (digitShown !== hole.level) { digitShown = hole.level; digit.material.map = digitTexture(hole.level + 1); digit.material.needsUpdate = true; }
+  const h = Math.min(2.8, Math.max(0.8, hole.r * 0.5));
+  digit.scale.set(h / 1.5, h / 1.5, 1);
+  // on the far wall (the camera looks north), facing the camera, its top just below the rim
+  digit.position.set(hole.x, -0.18 - h / 2, hole.z - hole.r * 0.97);
 }
 
 // ------------------------------------------------------------------ bubbles (reef only)
@@ -636,7 +663,7 @@ function physics(dt) {
     const ux = dx / d, uz = dz / d;
     if (state[n] === 2) {
       // resting debris drifts into the hole when near the rim (if the hole is big enough for it)
-      if (d < r - 0.15 - (s - 1) * 0.3 && canSwallow(s)) { pileUnregister(n); state[n] = 1; vx[n] = ux; vz[n] = uz; vy[n] = 0; }
+      if (d < r - 0.15 - (s - 1) * 0.3 && canSwallow(s)) { pileUnregister(n); state[n] = 1; captured[n] = 1; vx[n] = ux; vz[n] = uz; vy[n] = -2; }
       else {
         let moved = false;
         if (d < r + 1.3 && canSwallow(s)) { const sp = (1 - (d - r) / 1.3) * 2.2 * dt / s; x += ux * sp; z += uz * sp; moved = true; }
@@ -655,8 +682,13 @@ function physics(dt) {
     }
     if (state[n] === 1) {
       vy[n] -= GRAVITY * dt;
-      if (captured[n]) { x += holeDX; z += holeDZ; } // swallowed pieces follow a moving hole
       const bottom = y - h;
+      // anything over the middle of the hole, or already down inside it, travels with the hole
+      // (so a reversing hole never leaves it hanging on the rim); pieces near the edge and still
+      // above ground just fall straight
+      if (!captured[n] && (d < r - h - 0.3 || (bottom < -0.05 && d < r))) captured[n] = 1;
+      if (captured[n] && (bottom < -0.1 || d < r - h - 0.3)) { x += holeDX; z += holeDZ; }
+      const ox = x, oz = z;
       if (bottom < -0.2 && d < r + 0.2) {
         vx[n] += ux * 8 * dt; vz[n] += uz * 8 * dt;
       } else if (d < r + 1.6 && bottom < 1.2) {
@@ -665,6 +697,12 @@ function physics(dt) {
         vx[n] += ux * sp; vz[n] += uz * sp;
       }
       x += vx[n] * dt; y += vy[n] * dt; z += vz[n] * dt;
+      // never shove a falling piece sideways into something still standing (it would get
+      // lifted on top of it): stop the sideways part of the move instead
+      if (y - h > -0.05 && (Math.round(x) !== Math.round(ox) || Math.round(z) !== Math.round(oz))) {
+        const kb = Math.max(0, Math.floor(y - h + 0.05));
+        if (inGrid(Math.round(x), Math.round(z), kb) && occ[oIdx(Math.round(x), Math.round(z), kb)]) { x = ox; z = oz; vx[n] = 0; vz[n] = 0; }
+      }
       rx[n] += wx[n] * dt; ry[n] += wy[n] * dt; rz[n] += wz[n] * dt;
       const d2 = Math.hypot(hole.x - x, hole.z - z);
       const b2 = y - h;
@@ -673,8 +711,10 @@ function physics(dt) {
           const lim = Math.max(0.1, r - h * 0.9);
           if (d2 > lim) { const k = lim / d2; x = hole.x + (x - hole.x) * k; z = hole.z + (z - hole.z) * k; vx[n] *= 0.4; vz[n] *= 0.4; }
           if (y < -4.5 - s) { consume(n); continue; }
-        } else if (d2 < r + 0.45) {
-          y = Math.max(y, h - 0.2); vy[n] = Math.min(vy[n], -1);
+        } else if (d2 < r + 0.15) {
+          // tipping over the rim: keep falling, never lifted back up; once its middle is over the
+          // hole it's caught (follows the hole) and drops through quickly instead of riding the edge
+          if (d2 < r) { captured[n] = 1; vy[n] = Math.min(vy[n], -4); } else vy[n] = Math.min(vy[n], -1);
           vx[n] += (hole.x - x) / (d2 || 1) * 14 * dt; vz[n] += (hole.z - z) / (d2 || 1) * 14 * dt;
           wx[n] += (Math.random() - 0.5) * 20 * dt / s; wz[n] += (Math.random() - 0.5) * 20 * dt / s;
         }
@@ -682,12 +722,11 @@ function physics(dt) {
       if (state[n] === 1 && d2 >= r - 0.3 && y - h >= -0.7) {
         const f = floorAt(x, z, y - h);
         if (f === -999) { if (y < -12) { consume(n); continue; } }
-        else if (y - h <= f && !(f === 0 && d2 < r + 0.45)) {
+        else if (y - h <= f && !(f === 0 && d2 < r + 0.15)) {
           y = f + h;
-          if (vy[n] < -5) {
-            if (s > 1 && vy[n] < -9) shake = Math.min(1, shake + 0.12 * s);
-            vy[n] *= -0.22; vx[n] *= 0.6; vz[n] *= 0.6; wx[n] *= 0.5; wz[n] *= 0.5;
-          } else if (spillCount[n] < 16 && (pileH.get(keyAt(x, z)) || 0) > 0 && (sd = spillDir(x, z, f, s))) {
+          if (s > 1 && vy[n] < -9) shake = Math.min(1, shake + 0.12 * s);
+          // no bounce: a landing piece either slides gently off a pile or comes to rest
+          if (spillCount[n] < 16 && (pileH.get(keyAt(x, z)) || 0) > 0 && (sd = spillDir(x, z, f, s))) {
             // landed on a pile of fallen cubes and the spot next door is lower: slide gently off it.
             // (cubes that land on a ledge of something still standing just rest there)
             spillCount[n]++;
@@ -752,6 +791,7 @@ function onEat(v, s) {
     if (navigator.vibrate) try { navigator.vibrate(25); } catch (e) {}
     flashT = 1;
     sizeEl.classList.remove('bump'); void sizeEl.offsetWidth; sizeEl.classList.add('bump');
+    sizeEl.classList.remove('gone'); clearTimeout(sizeTimer); sizeTimer = setTimeout(() => sizeEl.classList.add('gone'), 2600);
     for (const bs of [2, 4]) if (UNLOCK[bs] === hole.level) showToast(`${bs}× blocks unlocked`, true);
   }
 }
@@ -868,6 +908,8 @@ function updateCamera(dt, snap = false) {
 // ------------------------------------------------------------------ HUD
 const hud = document.getElementById('hud');
 const sizeEl = document.getElementById('size');
+let sizeTimer = 0;
+sizeEl.classList.add('gone'); // the size shows inside the hole; the label only pops up at a size-up
 const hintEl = document.getElementById('hint');
 const arrowEl = document.getElementById('arrow');
 const toastEl = document.getElementById('toast');
@@ -1127,6 +1169,7 @@ function frame(now) {
   const g = 1 + gulp * 0.05;
   ringGroup.scale.set(g, 1, g);
   progGroup.position.set(hole.x, 0, hole.z);
+  updateDigit();
   if (playing) swallowScan();
   supportCheck();
   physics(dt);
@@ -1167,7 +1210,7 @@ function frame(now) {
 requestAnimationFrame(frame);
 
 // test hooks for automated playtesting
-function stepSim(n) { for (let i = 0; i < n; i++) { hole.r += (hole.rTarget - hole.r) * 0.1; holeUniform.value.set(hole.x, hole.z, hole.r); swallowScan(); supportCheck(); physics(1 / 30); updateWobble(1 / 30, performance.now() / 1000); } holeGroup.position.set(hole.x, 0, hole.z); holeGroup.scale.set(hole.r, 1, hole.r); }
+function stepSim(n) { for (let i = 0; i < n; i++) { holeDX = hole.x - prevHX; holeDZ = hole.z - prevHZ; prevHX = hole.x; prevHZ = hole.z; if (Math.abs(holeDX) > 3 || Math.abs(holeDZ) > 3) holeDX = holeDZ = 0; hole.r += (hole.rTarget - hole.r) * 0.1; holeUniform.value.set(hole.x, hole.z, hole.r); swallowScan(); supportCheck(); physics(1 / 30); updateWobble(1 / 30, performance.now() / 1000); } holeGroup.position.set(hole.x, 0, hole.z); holeGroup.scale.set(hole.r, 1, hole.r); }
 function nearestRemaining() {
   // nearest piece the hole can currently eat; falls back to any piece
   let best = -1, bd = Infinity, any = -1, ad = Infinity;
@@ -1185,6 +1228,7 @@ window.__void = {
   get level() { return hole.level; }, get remaining() { return remainingPieces; }, get eaten() { return eatenVol; },
   get total() { return totalVol; }, get N() { return N; }, get active() { return active.length; }, get map() { return world.id; },
   start: (id = 'farm') => play(id), thresholds: () => thresholds.slice(),
+  get viewShort() { return viewShort; }, dbg: () => ({ cx, cy, cz, vx, vy, vz, state, gk, gi, gj, sz, captured }),
   maxPile: () => { let m = 0; for (const v of pileH.values()) m = Math.max(m, v); return m; }, resting: () => { let c = 0; for (let n = 0; n < N; n++) if (state[n] === 2) c++; return c; },
 };
 

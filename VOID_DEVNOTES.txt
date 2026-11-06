@@ -350,3 +350,25 @@ PHASE 7 — Haunted and Airport (maps 7 and 8)
   it, edge lights, a windsock. Floating: a small plane coming in to land
   at the east end and one climbing out to the west, plus a few birds.
   ~11,300 pieces. Bot cleared it, no errors.
+
+PHASE 7.1 — falling fixes, ring on the floor, size digit, Haunted tweaks
+- Car roofs (any stacked cube) no longer fly up and ahead of the hole. Cause:
+  the hole dragged the cubes it had caught sideways into the next car, and
+  the overlap got "fixed" by lifting them on top, over and over. Now a
+  falling cube is never shoved into something still standing.
+- No more bounce when cubes land: they land and rest (or slide gently off a
+  pile).
+- Rim drag / left behind on a reverse: cubes that slid into the hole weren't
+  marked as caught, so the wall pushed them along instead of carrying them.
+  Anything over the middle of the hole or already inside it now travels
+  with the hole. The "lip" just outside the edge is gone: a cube whose middle
+  is over the hole drops in; one whose middle is on solid ground stays on
+  the ground and slides in when the hole comes back. Cornfield test at Size
+  8 (far to near, then reverse): 55 cubes left behind before, 26 now.
+- The level-up ring lies on the floor: things standing on it hide it, and a
+  faint see-through copy (about 25%) still shows where it runs underneath.
+- The hole's size is printed as a soft grey digit on the far inside wall,
+  just under the rim. The floating "Size N" label only pops up for a moment
+  at each size-up.
+- Haunted: ghosts about 3/4 the size; the twisted tree is taller (30 high)
+  with 11 branches, forked twigs and a crooked crown.

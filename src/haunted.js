@@ -171,13 +171,14 @@ export function buildHaunted() {
   const twistedTree = (x0, z0) => {
     let px = x0, pz = z0;
     const pts = [];
-    for (let k = 0; k <= 22; k++) {
-      px = x0 + Math.sin(k * 0.27) * 2.6; pz = z0 + Math.cos(k * 0.21) * 1.6 - 1.6;
-      const r = Math.max(1.2, 3.6 - k * 0.11);
+    const TOP = 30;
+    for (let k = 0; k <= TOP; k++) {
+      px = x0 + Math.sin(k * 0.24) * 2.8; pz = z0 + Math.cos(k * 0.19) * 1.7 - 1.7;
+      const r = Math.max(1.3, 4.0 - k * 0.09);
       cylY(px, pz, k, 1, r, (i, kk, j) => (hash(i, kk, j) < 0.35 ? C.bark2 : C.bark));
       pts.push([px, pz]);
     }
-    chunky(x0 - 6, 0, z0 - 6, x0 + 6, 14, z0 + 6, 2);
+    chunky(x0 - 7, 0, z0 - 7, x0 + 7, 18, z0 + 7, 2);
     // a face in the bark: glowing red eyes and a dark mouth
     const [fx, fz] = pts[9];
     set(fx - 1, 10, fz + 3, C.eyeRed); set(fx + 1, 10, fz + 3, C.eyeRed);
@@ -190,17 +191,27 @@ export function buildHaunted() {
     }
     // twisting branches that reach out and curl
     const ends = [];
-    for (let t = 0; t < 7; t++) {
-      const k0 = 12 + (t % 4) * 3;
-      let [bx, bz] = pts[Math.min(22, k0)], bk = k0, a = (t / 7) * Math.PI * 2;
-      for (let s = 0; s < 14; s++) {
-        a += 0.18 * (t % 2 ? 1 : -1);
-        bx += Math.cos(a) * 1.0; bz += Math.sin(a) * 0.8; bk += s < 9 ? 0.6 : -0.5;
-        set(bx, bk, bz, C.bark); if (s < 5) { set(bx, bk - 1, bz, C.bark2); set(bx + 1, bk, bz, C.bark); }
-        if (s === 7) for (let q = 1; q < 4; q++) set(bx + q * Math.cos(a + 1.4), bk + q, bz + q * Math.sin(a + 1.4), C.bark2); // a twig
+    const NB = 11;
+    for (let t = 0; t < NB; t++) {
+      const k0 = Math.round(13 + (t % 5) * 3.3);
+      let [bx, bz] = pts[Math.min(TOP, k0)], bk = k0, a = (t / NB) * Math.PI * 2 + (t % 3) * 0.2;
+      for (let s = 0; s < 16; s++) {
+        a += 0.17 * (t % 2 ? 1 : -1);
+        bx += Math.cos(a) * 1.0; bz += Math.sin(a) * 0.8; bk += s < 11 ? 0.72 : -0.5;
+        set(bx, bk, bz, C.bark); if (s < 7) { set(bx, bk - 1, bz, C.bark2); set(bx + 1, bk, bz, C.bark); }
+        // twigs that fork upward, with a little fork of their own
+        if (s === 5 || s === 10) {
+          const ta = a + (s === 5 ? 1.4 : -1.3);
+          let tx = bx, tk = bk, tz = bz;
+          for (let q = 1; q < 5; q++) { tx += Math.cos(ta); tz += Math.sin(ta); tk += 0.9; set(tx, tk, tz, C.bark2); }
+          set(tx + Math.cos(ta - 1.2), tk + 1, tz + Math.sin(ta - 1.2), C.bark2);
+        }
       }
       ends.push([Math.round(bx), Math.round(bk), Math.round(bz)]);
     }
+    // a crown of short, crooked twigs at the very top
+    const [cxx, czz] = pts[TOP];
+    for (let t = 0; t < 6; t++) { const a = t * 1.05; for (let q = 1; q < 5; q++) set(cxx + Math.cos(a + q * 0.3) * q * 0.8, TOP + q, czz + Math.sin(a + q * 0.3) * q * 0.8, C.bark2); }
     // a lantern hanging from one branch, a spider dangling from another, crows on two more
     const [lx, lk, lz] = ends[1];
     for (let k = lk - 1; k > lk - 4; k--) set(lx, k, lz, C.iron);
@@ -254,17 +265,18 @@ export function buildHaunted() {
     line(x + 4, 0, z - 1, x + 6, 9, z - 2, C.plank); for (let q = 0; q < 3; q++) set(x + 4 + (q % 2), q, z - 1 + q - 1, C.hay); // a broom
   };
   const ghost = (x, k, z) => {
-    ellipsoid(x, k + 6, z, 2.4, 2.2, 2.4, C.ghost);
-    for (let t = 0; t < 6; t++) {
-      const r = 2.4 + t * 0.32, kk = k + 5 - t;
+    // about three-quarters of the old size
+    ellipsoid(x, k + 5, z, 1.8, 1.7, 1.8, C.ghost);
+    for (let t = 0; t < 5; t++) {
+      const r = 1.8 + t * 0.26, kk = k + 4 - t;
       cylY(x, z, kk, 1, r, (i, _, j) => {
-        if (t < 5) return Math.hypot(i - x, j - z) > r - 1.2 ? C.ghost : undefined;
+        if (t < 4) return Math.hypot(i - x, j - z) > r - 1.1 ? C.ghost : undefined;
         const a = Math.atan2(j - z, i - x); return Math.sin(a * 5) > -0.2 ? C.ghost : undefined; // wavy hem
       });
     }
-    set(x - 1, k + 7, z + 2, C.iron); set(x + 1, k + 7, z + 2, C.iron); // eyes
-    set(x, k + 5, z + 2, C.iron); set(x, k + 4, z + 3, C.iron);         // "oooo"
-    for (const d of [-1, 1]) { set(x + d * 3, k + 5, z + 1, C.ghost); set(x + d * 4, k + 6, z + 1, C.ghost); } // waving arms
+    set(x - 1, k + 6, z + 2, C.iron); set(x + 1, k + 6, z + 2, C.iron); // eyes
+    set(x, k + 4, z + 2, C.iron);                                     // "oooo"
+    for (const d of [-1, 1]) { set(x + d * 3, k + 4, z, C.ghost); set(x + d * 3, k + 5, z + 1, C.ghost); } // waving arms
   };
   const bat = (x, k, z) => {
     set(x, k, z, C.bat); set(x, k + 1, z, C.bat); set(x, k, z + 1, C.eyeRed);
