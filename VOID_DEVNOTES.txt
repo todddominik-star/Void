@@ -372,3 +372,20 @@ PHASE 7.1 — falling fixes, ring on the floor, size digit, Haunted tweaks
   at each size-up.
 - Haunted: ghosts about 3/4 the size; the twisted tree is taller (30 high)
   with 11 branches, forked twigs and a crooked crown.
+
+PHASE 7.2 — no more thin towers, steady size digit
+- Towers came back after 7.1 for two reasons:
+  1. Without the old little hop, a cube sliding off a pile touched down on
+     the same pile again the very next frame, used up its slide attempts in
+     half a second and stayed on top. Now it glides along the pile's top
+     until it's over the lower spot next door, then falls.
+  2. Big (2x) blocks sit between grid squares while falling, so the game
+     sometimes checked the wrong square for "is there a pile here?", found
+     none, rested, and got snapped onto the pile anyway. Now it checks the
+     spot it will actually settle on.
+  Skim test (Size 5 hole in rows across the map, half-eating everything):
+  tallest pile Farm 6 -> 4 (one big 4x block), Haunted 18 -> 6 (3 big
+  blocks wedged in a broken wall corner), Airport 2. Sunflower sweep:
+  tallest 12 -> 1, debris left 523 -> 9. Car roofs still never launch.
+- The size digit in the hole stays the same size on screen at every size
+  (the Size 7 size).

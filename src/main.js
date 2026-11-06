@@ -269,7 +269,8 @@ scene.add(digit);
 let digitShown = -1;
 function updateDigit() {
   if (digitShown !== hole.level) { digitShown = hole.level; digit.material.map = digitTexture(hole.level + 1); digit.material.needsUpdate = true; }
-  const h = Math.min(2.8, Math.max(0.8, hole.r * 0.5));
+  // the same size on screen at every hole size (the size it is at Size 7)
+  const h = 2.8 * viewShort / (VIEW_BASE + 2 * RADII[6] * VIEW_PER_HOLE);
   digit.scale.set(h / 1.5, h / 1.5, 1);
   // on the far wall (the camera looks north), facing the camera, its top just below the rim
   digit.position.set(hole.x, -0.18 - h / 2, hole.z - hole.r * 0.97);
@@ -354,7 +355,7 @@ const inGrid = (i, j, k) => i >= -GO && i < GO && j >= -GO && j < GO && k >= 0 &
 
 // per-world state
 let world = FARM, N = 0;
-let captured, restKey, spillCount, cx, cy, cz, vx, vy, vz, rx, ry, rz, wx, wy, wz, gi, gj, gk, sz, colR, colG, colB, colIdx, state, visitStamp, scanStamp, baseMatrixDirty;
+let captured, restKey, spillCount, spillFrom, cx, cy, cz, vx, vy, vz, rx, ry, rz, wx, wy, wz, gi, gj, gk, sz, colR, colG, colB, colIdx, state, visitStamp, scanStamp, baseMatrixDirty;
 let staticMesh = null;
 let totalVol = 0, eatenVol = 0, remainingPieces = 0, thresholds = [];
 const groupRemaining = {};
@@ -399,6 +400,7 @@ function loadWorld(id) {
   gi = new Int16Array(N); gj = new Int16Array(N); gk = new Int16Array(N);
   captured = new Uint8Array(N);
   spillCount = new Uint8Array(N);
+  spillFrom = new Int32Array(N).fill(-1);
   restKey = new Int32Array(N).fill(-1);
   pileH.clear(); pileList.clear();
   sz = new Uint8Array(N); colIdx = new Uint8Array(N); state = new Uint8Array(N);
@@ -697,11 +699,12 @@ function physics(dt) {
         vx[n] += ux * sp; vz[n] += uz * sp;
       }
       x += vx[n] * dt; y += vy[n] * dt; z += vz[n] * dt;
+      if (spillFrom[n] >= 0 && keyAt(x, z) !== spillFrom[n]) spillFrom[n] = -1;
       // never shove a falling piece sideways into something still standing (it would get
       // lifted on top of it): stop the sideways part of the move instead
       if (y - h > -0.05 && (Math.round(x) !== Math.round(ox) || Math.round(z) !== Math.round(oz))) {
         const kb = Math.max(0, Math.floor(y - h + 0.05));
-        if (inGrid(Math.round(x), Math.round(z), kb) && occ[oIdx(Math.round(x), Math.round(z), kb)]) { x = ox; z = oz; vx[n] = 0; vz[n] = 0; }
+        if (inGrid(Math.round(x), Math.round(z), kb) && occ[oIdx(Math.round(x), Math.round(z), kb)]) { x = ox; z = oz; vx[n] = 0; vz[n] = 0; spillFrom[n] = -1; }
       }
       rx[n] += wx[n] * dt; ry[n] += wy[n] * dt; rz[n] += wz[n] * dt;
       const d2 = Math.hypot(hole.x - x, hole.z - z);
@@ -722,17 +725,24 @@ function physics(dt) {
       if (state[n] === 1 && d2 >= r - 0.3 && y - h >= -0.7) {
         const f = floorAt(x, z, y - h);
         if (f === -999) { if (y < -12) { consume(n); continue; } }
-        else if (y - h <= f && !(f === 0 && d2 < r + 0.15)) {
+        else if (spillFrom[n] >= 0 && keyAt(x, z) === spillFrom[n] && y - h <= f) {
+          // sliding off a pile: glide along its top until it's over the lower spot, then fall
+          y = f + h; vy[n] = 0;
+        } else if (y - h <= f && !(f === 0 && d2 < r + 0.15)) {
           y = f + h;
           if (s > 1 && vy[n] < -9) shake = Math.min(1, shake + 0.12 * s);
           // no bounce: a landing piece either slides gently off a pile or comes to rest
-          if (spillCount[n] < 16 && (pileH.get(keyAt(x, z)) || 0) > 0 && (sd = spillDir(x, z, f, s))) {
+          // look at the grid spot it would settle on (big blocks sit between squares while falling)
+          const qx = Math.round(x - (s - 1) / 2) + (s - 1) / 2, qz = Math.round(z - (s - 1) / 2) + (s - 1) / 2;
+          const fq = floorAt(qx, qz, y - h + 0.5);
+          if (spillCount[n] < 16 && (pileH.get(keyAt(qx, qz)) || 0) > 0 && (sd = spillDir(qx, qz, fq, s))) {
             // landed on a pile of fallen cubes and the spot next door is lower: slide gently off it.
             // (cubes that land on a ledge of something still standing just rest there)
             spillCount[n]++;
+            x = qx; z = qz; y = fq + h;
+            spillFrom[n] = keyAt(x, z);
             const L = Math.hypot(sd[0], sd[1]);
-            vx[n] = (sd[0] / L) * 1.8; vz[n] = (sd[1] / L) * 1.8; vy[n] = 0;
-            y = f + h + 0.02;
+            vx[n] = (sd[0] / L) * 2.4; vz[n] = (sd[1] / L) * 2.4; vy[n] = 0;
           } else {
             state[n] = 2; captured[n] = 0; vx[n] = vy[n] = vz[n] = 0;
             // settle square on the grid so piles stack neatly
@@ -1229,6 +1239,10 @@ window.__void = {
   get total() { return totalVol; }, get N() { return N; }, get active() { return active.length; }, get map() { return world.id; },
   start: (id = 'farm') => play(id), thresholds: () => thresholds.slice(),
   get viewShort() { return viewShort; }, dbg: () => ({ cx, cy, cz, vx, vy, vz, state, gk, gi, gj, sz, captured }),
+  pileInfo: () => { let best = 0, bk = -1; for (const [k, v] of pileH) if (v > best) { best = v; bk = k; }
+    const x = Math.floor(bk / GW) - GO, z = (bk % GW) - GO; const arr = pileList.get(bk) || [];
+    const nb = []; for (const [a, b] of SPILL) nb.push(+floorAt(x + a, z + b, 99).toFixed(1));
+    return { x, z, h: best, sizes: arr.map((n) => sz[n]), ys: arr.map((n) => +cy[n].toFixed(2)), sd: spillDir(x, z, best, sz[arr[arr.length - 1]] || 1), base: floorAt(x, z, 0.5) - best, nb, spills: arr.map((n) => spillCount[n]), outside: SPILL.map(([a, b]) => outsidePlay(x + a, z + b)) }; },
   maxPile: () => { let m = 0; for (const v of pileH.values()) m = Math.max(m, v); return m; }, resting: () => { let c = 0; for (let n = 0; n < N; n++) if (state[n] === 2) c++; return c; },
 };
 
