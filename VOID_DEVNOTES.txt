@@ -389,3 +389,13 @@ PHASE 7.2 — no more thin towers, steady size digit
   tallest 12 -> 1, debris left 523 -> 9. Car roofs still never launch.
 - The size digit in the hole stays the same size on screen at every size
   (the Size 7 size).
+
+RELEASE NUMBERS AND COPYRIGHT
+- Every published version gets the next release number (one number, no
+  major/minor). It shows on the start screen with the build date, e.g.
+  "v12 · Nov 6, 2026". It lives at the top of build.mjs (const VERSION) and
+  also names the phone's offline cache, so a new number = a fresh download.
+- Start screen and page source carry: (c) 2026 Todd Dominik. All rights
+  reserved. Personal play only. The LICENSE file spells out "no reuse".
+- Beach: asks for more before each size-up (umbrellas drop lots of cubes at
+  once): 2% / 5.5% / 10% / 17% / 26% / 37% / 50% / 66% of the map.

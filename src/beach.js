@@ -13,6 +13,8 @@ export const BEACH = {
   id: 'beach', name: 'Beach', tagline: 'Sun, sand and a sand castle. Mind the crabs.',
   win: 'The beach is empty. Even the sand castle.',
   start: START, half: HALF,
+  // umbrellas drop lots of cubes at once, so the Beach asks for more before each size-up
+  levels: [0.02, 0.055, 0.1, 0.17, 0.26, 0.37, 0.5, 0.66],
   ground: '#efd9a0', skirt: '#d8bd7f', sky: '#cdeefc', bg: 'linear-gradient(#a9e0f8, #def4fd 60%, #cdeefc)',
   hemiSky: 0xf2fbff, hemiGround: 0xd8c08a, sun: 0xfff3dc, caustics: false, bubbles: false, beach: true,
   fogFar: 6,
