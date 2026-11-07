@@ -399,3 +399,21 @@ RELEASE NUMBERS AND COPYRIGHT
   reserved. Personal play only. The LICENSE file spells out "no reuse".
 - Beach: asks for more before each size-up (umbrellas drop lots of cubes at
   once): 2% / 5.5% / 10% / 17% / 26% / 37% / 50% / 66% of the map.
+
+v13 — PARK (map 9)
+- Built for big falls: nearly everything stands high on thin legs.
+- Roller coaster down the right side: station by the gate, a lift hill up to
+  37 high with a train of cars climbing it, a big drop, a loop, camel-back
+  hills home. The track is laid in short spans with a one-cube joint between
+  them, so each span crashes down on its own as you eat its legs (test:
+  four bites along the lift hill dropped 19, 79, 127, 192 of its cubes).
+- Ferris wheel (back left, 39 high) with 12 gondolas on A-frame legs: eat
+  the legs and the whole wheel comes down.
+- Drop tower (45 high) with its seat ring stopped near the top; swing ride;
+  carousel with horses and a striped tent roof; log flume tower with a long
+  chute into a splash pond; bumper-car pavilion; ice cream, popcorn, cotton
+  candy and prize stands; the entrance arch with ticket booths; balloon
+  bunches (one held by a vendor) and a hot-air balloon floating overhead;
+  lamps, benches, trees, flower beds and about 50 people.
+- Paths, the carousel plaza and the pond are painted on the ground.
+- ~9,600 pieces. Bot cleared it in 68 s. Tallest pile in the skim test: 2.

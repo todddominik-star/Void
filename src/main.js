@@ -10,9 +10,10 @@ import { STADIUM } from './stadium.js';
 import { BEACH } from './beach.js';
 import { HAUNTED } from './haunted.js';
 import { AIRPORT } from './airport.js';
+import { PARK } from './park.js';
 
-const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE, stadium: STADIUM, beach: BEACH, haunted: HAUNTED, airport: AIRPORT };
-const MAP_ORDER = ['farm', 'reef', 'valley', 'castle', 'stadium', 'beach', 'haunted', 'airport'];
+const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE, stadium: STADIUM, beach: BEACH, haunted: HAUNTED, airport: AIRPORT, park: PARK };
+const MAP_ORDER = ['farm', 'reef', 'valley', 'castle', 'stadium', 'beach', 'haunted', 'airport', 'park'];
 
 // ------------------------------------------------------------------ tuning
 const RADII = [1.6, 2.1, 2.7, 3.4, 4.2, 5.2, 6.4, 7.8, 9.4]; // hole radius per size
@@ -56,6 +57,7 @@ const stripeUniform = { value: 0 };
 const beachUniform = { value: 0 };
 const mistUniform = { value: 0 };
 const airportUniform = { value: 0 };
+const parkUniform = { value: 0 };
 const glowUniform = { value: 1.5 };
 
 // ------------------------------------------------------------------ ground
@@ -68,9 +70,10 @@ groundMat.onBeforeCompile = (s) => {
   s.uniforms.uBeach = beachUniform;
   s.uniforms.uMist = mistUniform;
   s.uniforms.uAirport = airportUniform;
+  s.uniforms.uPark = parkUniform;
   s.vertexShader = 'varying vec3 vWPos;\n' + s.vertexShader.replace('#include <begin_vertex>',
     '#include <begin_vertex>\n vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-  s.fragmentShader = 'uniform vec3 uHole;\nuniform float uTime;\nuniform float uCaustic;\nuniform float uStripes;\nuniform float uBeach;\nuniform float uMist;\nuniform float uAirport;\nvarying vec3 vWPos;\n' + s.fragmentShader
+  s.fragmentShader = 'uniform vec3 uHole;\nuniform float uTime;\nuniform float uCaustic;\nuniform float uStripes;\nuniform float uBeach;\nuniform float uMist;\nuniform float uAirport;\nuniform float uPark;\nvarying vec3 vWPos;\n' + s.fragmentShader
     .replace('void main() {', 'void main() {\n float dh = distance(vWPos.xz, uHole.xy);\n if (dh < uHole.z) discard;')
     .replace('#include <color_fragment>', `#include <color_fragment>
       vec2 t = floor(vWPos.xz / 2.0 + 0.25);
@@ -145,6 +148,20 @@ groundMat.onBeforeCompile = (s) => {
           float H = step(hq.x, 2.0) * step(hq.y, 2.4) * (step(1.4, hq.x) + step(hq.y, 0.3));
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.97), clamp(H, 0.0, 1.0));
         }
+      }
+      if (uPark > 0.5) {
+        // paved paths: a ring round the park, a walk in from the gate, a plaza round the carousel
+        vec2 w = vWPos.xz;
+        float rr = length(w);
+        float path = step(abs(rr - 32.0), 3.0) + step(abs(w.x), 3.0) * step(30.0, w.y) + step(rr, 12.0);
+        if (path > 0.5) {
+          vec2 tq = floor(w / 1.5);
+          float chk = mod(tq.x + tq.y, 2.0);
+          diffuseColor.rgb = mix(vec3(0.91, 0.85, 0.74), vec3(0.87, 0.80, 0.69), chk) * (0.98 + 0.02 * ch);
+        }
+        // the flume's splash pond
+        float pd = distance(w, vec2(-55.0, -48.0));
+        if (pd < 8.5) diffuseColor.rgb = mix(vec3(0.36, 0.72, 0.9), vec3(0.95, 0.92, 0.8), step(7.6, pd));
       }
       if (uMist > 0.5) {
         // slow, drifting ground mist
@@ -380,6 +397,7 @@ function loadWorld(id) {
   hemi.intensity = world.hemiI ?? 1.15; sun.intensity = world.sunI ?? 1.75;
   mistUniform.value = world.mist ? 1 : 0;
   airportUniform.value = world.airport ? 1 : 0;
+  parkUniform.value = world.park ? 1 : 0;
   glowUniform.value = world.glow ?? 1.5;
   causticUniform.value = world.caustics ? 1 : 0;
   stripeUniform.value = world.stripes ? 1 : 0;
