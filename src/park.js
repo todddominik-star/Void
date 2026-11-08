@@ -1,9 +1,9 @@
 // Amusement Park: built for big falls. Almost everything stands high on thin legs, so eating
 // a support brings cubes crashing down. The roller coaster track is laid in short spans with a
 // one-cube gap between them, so each span falls on its own when its supports are eaten.
-// Entrance arch at the front, carousel in the middle, Ferris wheel back left, roller coaster
-// down the right side (lift hill, drop, loop), drop tower and swing ride on the left, log
-// flume into a pond at the back left, bumper cars at the back, snack stands, balloons and a
+// Entrance arch at the front, carousel in the middle, the roller coaster running side to side
+// across the back (lift hill, drop, hills, a loop facing you), Ferris wheel on the left, drop
+// tower and swing ride either side of the carousel, log flume into a pond on the right, bumper cars, snack stands, balloons and a
 // hot-air balloon floating overhead. Paths and the pond are painted by the ground shader.
 import { C } from './palette.js';
 import { makeBuilder, hash } from './builder.js';
@@ -33,20 +33,19 @@ export function buildPark() {
     // the ride path: x, k (height of the track), z. The loop is inserted as its own points.
     const P = [];
     const add = (x, k, z) => P.push([x, k, z]);
-    add(32, 3, 30); add(44, 3, 30); add(52, 4, 26); add(55, 6, 16);
-    // the lift hill, up to the top
-    for (let t = 0; t <= 1; t += 0.1) add(55, 6 + t * 30, 16 - t * 44);
-    add(52, 37, -34); add(46, 37, -40);
-    // the big drop
-    add(40, 30, -44); add(34, 16, -45); add(30, 4, -42);
-    // the loop (it drifts sideways a little so the track can pass itself)
-    const LZ = -30, LR = 7, LK = 4 + LR;
-    for (let a = 0; a <= Math.PI * 2 + 0.01; a += Math.PI / 14) {
-      add(28 - (a / (Math.PI * 2)) * 4, LK - Math.cos(a) * LR, LZ - Math.sin(a) * LR);
-    }
-    // camel-back hills on the way home
-    add(24, 6, -18); add(25, 14, -8); add(27, 6, 2); add(28, 12, 12); add(30, 5, 22); add(32, 3, 30);
-
+    // it runs side to side across the back so you see every span fall in profile:
+    // out along z = -44 (high), home along z = -57 (low)
+    add(30, 3, -55); add(46, 3, -55); add(53, 4, -52); add(54, 6, -47); add(50, 6, -44);
+    // the lift hill, climbing west
+    for (let t = 0; t <= 1.001; t += 0.1) add(48 - t * 26, 6 + t * 30, -44);
+    add(18, 37, -44); add(14, 34, -44);
+    // the big drop and camel-back hills
+    add(8, 20, -44); add(2, 5, -44); add(-8, 14, -44); add(-16, 5, -44); add(-24, 12, -44); add(-33, 4, -44);
+    // the loop, face-on to the camera (it drifts back a little so the track can pass itself)
+    const LX = -42, LR = 7, LK = 4 + LR;
+    for (let a = 0; a <= Math.PI * 2 + 0.01; a += Math.PI / 14) add(LX - Math.sin(a) * LR, LK - Math.cos(a) * LR, -44 - (a / (Math.PI * 2)) * 5);
+    // round the end and home along the back
+    add(-48, 4, -51); add(-50, 4, -55); add(-44, 4, -57); add(-24, 7, -57); add(-6, 3, -57); add(12, 6, -57); add(24, 3, -56); add(30, 3, -55);
     // walk the path in small steps, laying rails and ties, supports under every few steps,
     // and a gap every so often so the track breaks into separate spans
     let dist = 0, nx = 1, nz = 0, lastSup = -99, span = 0, lastGap = 0;
@@ -73,14 +72,14 @@ export function buildPark() {
     }
     // a train of cars climbing the lift hill
     for (let c = 0; c < 4; c++) {
-      const z = 2 - c * 3.4, k = 6 + ((16 - z) / 44) * 30 + 1;
-      box(54, Math.round(k), Math.round(z) - 1, 3, 2, 3, RIDE[c % RIDE.length]);
-      set(55, Math.round(k) + 2, Math.round(z), C.skin); set(55, Math.round(k) + 2, Math.round(z) - 1, C.skin2);
+      const x = 40 - c * 3.4, k = Math.round(6 + ((48 - x) / 26) * 30 + 1);
+      box(Math.round(x) - 1, k, -45, 3, 2, 3, RIDE[c % RIDE.length]);
+      set(Math.round(x), k + 2, -44, C.skin); set(Math.round(x) - 1, k + 2, -44, C.skin2);
     }
-    // the station
-    box(34, 0, 32, 12, 1, 5, C.concrete);
-    for (const x of [34, 45]) for (const z of [32, 36]) for (let k = 1; k < 6; k++) set(x, k, z, C.trim);
-    box(33, 6, 31, 14, 1, 7, (i) => (i % 2 ? C.jetRed : C.trim));
+    // the station, beside the home stretch
+    box(32, 0, -52, 13, 1, 3, C.concrete);
+    for (const x of [32, 44]) for (const z of [-52, -50]) for (let k = 1; k < 6; k++) set(x, k, z, C.trim);
+    box(31, 6, -53, 15, 1, 5, (i) => (i % 2 ? C.jetRed : C.trim));
   };
 
   // ---------- Ferris wheel (faces the camera) ----------
@@ -152,22 +151,22 @@ export function buildPark() {
 
   // ---------- log flume: tower, a long chute down to the pond, and a log boat ----------
   const flume = () => {
-    box(-58, 0, -14, 7, 17, 7, (i, k) => (k % 3 ? C.shipWood : C.shipDark), 1);
-    chunky(-58, 0, -14, -52, 16, -8, 2);
-    box(-59, 17, -15, 9, 1, 9, C.shipDark);
-    // the chute runs north along x = -55 down to the pond
+    box(50, 0, 2, 7, 17, 7, (i, k) => (k % 3 ? C.shipWood : C.shipDark), 1);
+    chunky(50, 0, 2, 56, 16, 8, 2);
+    box(49, 17, 1, 9, 1, 9, C.shipDark);
+    // the chute runs north along x = 53 down to the pond
     let lastGap = 0;
-    for (let j = -16; j >= -42; j--) {
-      const t = (-16 - j) / 26, k = Math.round(16 - Math.pow(t, 1.6) * 15);
-      if (-16 - j - lastGap >= 9) { lastGap = -16 - j; continue; } // span joints
-      for (let i = -57; i <= -53; i++) set(i, k, j, i === -57 || i === -53 ? C.shipWood : C.water);
-      set(-57, k + 1, j, C.shipWood); set(-53, k + 1, j, C.shipWood);
-      if ((-16 - j - lastGap) % 4 === 2 && k > 1) for (let kk = 0; kk < k; kk++) { set(-57, kk, j, C.shipDark); set(-53, kk, j, C.shipDark); }
+    for (let j = 0; j >= -24; j--) {
+      const t = -j / 24, k = Math.round(16 - Math.pow(t, 1.6) * 15);
+      if (-j - lastGap >= 9) { lastGap = -j; continue; } // span joints
+      for (let i = 51; i <= 55; i++) set(i, k, j, i === 51 || i === 55 ? C.shipWood : C.water);
+      set(51, k + 1, j, C.shipWood); set(55, k + 1, j, C.shipWood);
+      if ((-j - lastGap) % 4 === 2 && k > 1) for (let kk = 0; kk < k; kk++) { set(51, kk, j, C.shipDark); set(55, kk, j, C.shipDark); }
     }
     // a log boat with riders at the top
-    box(-56, 17, -13, 3, 2, 5, C.trunk); set(-55, 19, -12, C.skin); set(-55, 19, -10, C.skin2); set(-55, 20, -12, C.hat);
+    box(52, 17, 3, 3, 2, 5, C.trunk); set(53, 19, 4, C.skin); set(53, 19, 6, C.skin2); set(53, 20, 4, C.hat);
     // a splash hanging over the pond
-    for (let n = 0; n < 14; n++) set(-55 + (rnd() - 0.5) * 6, 2 + rnd() * 4, -45 + (rnd() - 0.5) * 4, n % 3 ? C.foam : C.waterLight);
+    for (let n = 0; n < 14; n++) set(53 + (rnd() - 0.5) * 6, 2 + rnd() * 4, -27 + (rnd() - 0.5) * 4, n % 3 ? C.foam : C.waterLight);
   };
 
   // ---------- bumper cars ----------
@@ -222,29 +221,29 @@ export function buildPark() {
   // ---------- layout (camera looks north from the gate) ----------
   entrance();
   carousel(0, 2);
-  ferris(-30, -32);
+  ferris(-36, -14);
   coaster();
-  dropTower(-44, 8);
+  dropTower(20, 6);
   swings(-24, 18);
   flume();
-  bumpers(-2, -54);
+  bumpers(6, -30);
   stand(12, 22, C.towelPink, C.trim, 'cone');
   stand(-18, 30, C.jetRed, C.trim, 'popcorn');
   stand(14, -14, C.bag2, C.trim, 'candy');
   stand(-12, -12, C.bag5, C.trim, 'prize');
   balloonBunch(-6, 30, 16, true);
-  balloonBunch(20, 6, 24, false);
-  balloonBunch(-40, -6, 28, false);
-  balloonBunch(8, -30, 22, false);
+  balloonBunch(36, -6, 24, false);
+  balloonBunch(-42, 4, 28, false);
+  balloonBunch(14, -24, 22, false);
   hotAir(-6, 36, -26);
-  for (const [x, z] of [[-56, 30], [-50, 40], [-58, 18], [56, 40], [20, 44], [-30, 44], [44, -8], [-12, -48], [-20, -52]]) tree(x, z);
+  for (const [x, z] of [[-56, 30], [-50, 40], [-58, 18], [56, 40], [20, 44], [-30, 44], [44, -8], [-56, 2], [40, 30]]) tree(x, z);
   // lamps and benches along the round path, people out and about
-  for (let n = 0; n < 12; n++) { const a = (n / 12) * Math.PI * 2; if (Math.cos(a) * 36 < 22) lamp(Math.cos(a) * 36, Math.sin(a) * 36); }
+  for (let n = 0; n < 12; n++) { const a = (n / 12) * Math.PI * 2; if (Math.cos(a) * 36 < 44) lamp(Math.cos(a) * 36, Math.sin(a) * 36); }
   for (const [x, z] of [[6, 30], [-14, 22], [22, -2], [-24, -2], [-4, -22]]) bench(x, z);
   for (let n = 0, made = 0; n < 200 && made < 40; n++) {
     const a = rnd() * Math.PI * 2, r = 32 + (rnd() - 0.5) * 4.5;
     const x = Math.round(Math.cos(a) * r), z = Math.round(Math.sin(a) * r);
-    if (near(x, z, 5) || x > 24) continue;
+    if (near(x, z, 5) || (x > 14 && z < 16 && z > -2)) continue;
     person(x, z); made++;
   }
   for (let n = 0; n < 8; n++) person(-3 + n % 3 * 3, 34 - Math.floor(n / 3) * 2);

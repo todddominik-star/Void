@@ -160,7 +160,7 @@ groundMat.onBeforeCompile = (s) => {
           diffuseColor.rgb = mix(vec3(0.91, 0.85, 0.74), vec3(0.87, 0.80, 0.69), chk) * (0.98 + 0.02 * ch);
         }
         // the flume's splash pond
-        float pd = distance(w, vec2(-55.0, -48.0));
+        float pd = distance(w, vec2(53.0, -30.0));
         if (pd < 8.5) diffuseColor.rgb = mix(vec3(0.36, 0.72, 0.9), vec3(0.95, 0.92, 0.8), step(7.6, pd));
       }
       if (uMist > 0.5) {
@@ -311,7 +311,7 @@ function resetBubble(b, anywhere) {
 }
 
 // ------------------------------------------------------------------ beacons over the last few pieces
-const BEACONS = 80;
+const BEACONS = 20; // the beacons only show for the last 20 pieces
 const beaconMesh = new THREE.InstancedMesh(
   new THREE.OctahedronGeometry(0.42, 0),
   new THREE.MeshBasicMaterial({ color: '#ff9b3d', fog: false }), BEACONS);
@@ -703,11 +703,11 @@ function physics(dt) {
     if (state[n] === 1) {
       vy[n] -= GRAVITY * dt;
       const bottom = y - h;
-      // anything over the middle of the hole, or already down inside it, travels with the hole
-      // (so a reversing hole never leaves it hanging on the rim); pieces near the edge and still
-      // above ground just fall straight
-      if (!captured[n] && (d < r - h - 0.3 || (bottom < -0.05 && d < r))) captured[n] = 1;
-      if (captured[n] && (bottom < -0.1 || d < r - h - 0.3)) { x += holeDX; z += holeDZ; }
+      // pieces in the air fall truly straight down, whatever the hole is doing, so a tall thing's
+      // top lands deep inside a hole that slid under it. Once a piece is down below the ground
+      // inside the hole it travels with the hole, so the wall never drags it or leaves it behind.
+      if (!captured[n] && bottom < -0.05 && d < r) captured[n] = 1;
+      if (captured[n] && bottom < -0.1) { x += holeDX; z += holeDZ; }
       const ox = x, oz = z;
       if (bottom < -0.2 && d < r + 0.2) {
         vx[n] += ux * 8 * dt; vz[n] += uz * 8 * dt;

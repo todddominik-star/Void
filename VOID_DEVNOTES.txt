@@ -417,3 +417,18 @@ v13 — PARK (map 9)
   lamps, benches, trees, flower beds and about 50 people.
 - Paths, the carousel plaza and the pond are painted on the ground.
 - ~9,600 pieces. Bot cleared it in 68 s. Tallest pile in the skim test: 2.
+
+v14 — true straight falls, later beacons, coaster across the board
+- Cubes in the air now fall truly straight down, whatever the hole is doing.
+  (Since 7.1, a cube over the hole's middle travelled with the hole while
+  still falling, so tall things landed on the rim at the hole's speed.) Only
+  once a cube is below the ground inside the hole does it travel with the
+  hole, so the wall still never drags it. A tall tree's top now lands deep
+  inside a hole that slid under it. Trade-off (accepted): racing past
+  something tall can leave its top on the ground behind you.
+- The last-pieces beacons now appear at 20 pieces left (was 80).
+- Park: the roller coaster runs side to side across the back so each span's
+  collapse is seen in profile: out along the back (lift hill climbing west,
+  drop, hills, a loop facing you), home along the very back past the station.
+  Ferris wheel moved left, drop tower beside the carousel, log flume and
+  pond on the right, bumper cars in the middle back.
