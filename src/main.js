@@ -11,9 +11,10 @@ import { BEACH } from './beach.js';
 import { HAUNTED } from './haunted.js';
 import { AIRPORT } from './airport.js';
 import { PARK } from './park.js';
+import { CITY } from './city.js';
 
-const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE, stadium: STADIUM, beach: BEACH, haunted: HAUNTED, airport: AIRPORT, park: PARK };
-const MAP_ORDER = ['farm', 'reef', 'valley', 'castle', 'stadium', 'beach', 'haunted', 'airport', 'park'];
+const MAPS = { farm: FARM, reef: REEF, valley: VALLEY, castle: CASTLE, stadium: STADIUM, beach: BEACH, haunted: HAUNTED, airport: AIRPORT, park: PARK, city: CITY };
+const MAP_ORDER = ['farm', 'reef', 'valley', 'castle', 'stadium', 'beach', 'haunted', 'airport', 'park', 'city'];
 
 // ------------------------------------------------------------------ tuning
 const RADII = [1.6, 2.1, 2.7, 3.4, 4.2, 5.2, 6.4, 7.8, 9.4]; // hole radius per size
@@ -58,6 +59,7 @@ const beachUniform = { value: 0 };
 const mistUniform = { value: 0 };
 const airportUniform = { value: 0 };
 const parkUniform = { value: 0 };
+const cityUniform = { value: 0 };
 const glowUniform = { value: 1.5 };
 
 // ------------------------------------------------------------------ ground
@@ -71,9 +73,10 @@ groundMat.onBeforeCompile = (s) => {
   s.uniforms.uMist = mistUniform;
   s.uniforms.uAirport = airportUniform;
   s.uniforms.uPark = parkUniform;
+  s.uniforms.uCity = cityUniform;
   s.vertexShader = 'varying vec3 vWPos;\n' + s.vertexShader.replace('#include <begin_vertex>',
     '#include <begin_vertex>\n vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-  s.fragmentShader = 'uniform vec3 uHole;\nuniform float uTime;\nuniform float uCaustic;\nuniform float uStripes;\nuniform float uBeach;\nuniform float uMist;\nuniform float uAirport;\nuniform float uPark;\nvarying vec3 vWPos;\n' + s.fragmentShader
+  s.fragmentShader = 'uniform vec3 uHole;\nuniform float uTime;\nuniform float uCaustic;\nuniform float uStripes;\nuniform float uBeach;\nuniform float uMist;\nuniform float uAirport;\nuniform float uPark;\nuniform float uCity;\nvarying vec3 vWPos;\n' + s.fragmentShader
     .replace('void main() {', 'void main() {\n float dh = distance(vWPos.xz, uHole.xy);\n if (dh < uHole.z) discard;')
     .replace('#include <color_fragment>', `#include <color_fragment>
       vec2 t = floor(vWPos.xz / 2.0 + 0.25);
@@ -162,6 +165,29 @@ groundMat.onBeforeCompile = (s) => {
         // the flume's splash pond
         float pd = distance(w, vec2(53.0, -30.0));
         if (pd < 8.5) diffuseColor.rgb = mix(vec3(0.36, 0.72, 0.9), vec3(0.95, 0.92, 0.8), step(7.6, pd));
+      }
+      if (uCity > 0.5) {
+        // streets with yellow centre dashes and crosswalks, a river down the right, the park
+        vec2 w = vWPos.xz;
+        float av = step(abs(w.x + 30.0), 4.0) + step(abs(w.x - 4.0), 4.0);
+        float st = (step(abs(w.y - 34.0), 4.0) + step(abs(w.y - 8.0), 4.0) + step(abs(w.y + 16.0), 4.0)) * step(w.x, 34.0);
+        if (av + st > 0.5) {
+          diffuseColor.rgb = vec3(0.2, 0.21, 0.25) * (0.97 + 0.03 * ch);
+          float dashA = av * step(abs(abs(w.x + 13.0) - 17.0), 0.18) * step(0.5, fract(w.y / 4.0)) * (1.0 - st);
+          float dashS = st * (step(abs(w.y - 34.0), 0.18) + step(abs(w.y - 8.0), 0.18) + step(abs(w.y + 16.0), 0.18)) * step(0.5, fract(w.x / 4.0)) * (1.0 - av);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.98, 0.78, 0.25), clamp(dashA + dashS, 0.0, 1.0));
+          float cross = av * st * step(0.5, fract((w.x + w.y) / 1.6));
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.85), cross * 0.8);
+        }
+        // the river, with glints of the city lights
+        if (w.x > 35.5 && w.x < 50.5) {
+          float g = sin(w.y * 1.3 + uTime * 0.8 + sin(w.x * 2.1) * 2.0) * sin(w.x * 3.0 - uTime * 0.6);
+          diffuseColor.rgb = mix(vec3(0.12, 0.2, 0.36), vec3(0.95, 0.75, 0.5), smoothstep(0.8, 0.98, g) * 0.6);
+          if (w.x < 36.3 || w.x > 49.7) diffuseColor.rgb = vec3(0.45, 0.46, 0.5);
+        }
+        // the park and the plaza round the fountain
+        if (w.x > -24.0 && w.x < 2.0 && w.y > -58.0 && w.y < -34.0) diffuseColor.rgb = vec3(0.24, 0.42, 0.26) * (0.95 + 0.08 * ch);
+        if (distance(w, vec2(0.0, 47.0)) < 10.0) diffuseColor.rgb = mix(vec3(0.62, 0.58, 0.55), vec3(0.56, 0.52, 0.5), step(0.5, fract((w.x + w.y) / 2.0)));
       }
       if (uMist > 0.5) {
         // slow, drifting ground mist
@@ -398,6 +424,7 @@ function loadWorld(id) {
   mistUniform.value = world.mist ? 1 : 0;
   airportUniform.value = world.airport ? 1 : 0;
   parkUniform.value = world.park ? 1 : 0;
+  cityUniform.value = world.city ? 1 : 0;
   glowUniform.value = world.glow ?? 1.5;
   causticUniform.value = world.caustics ? 1 : 0;
   stripeUniform.value = world.stripes ? 1 : 0;
@@ -1137,6 +1164,17 @@ function win() {
   winEl.classList.remove('gone');
 }
 document.getElementById('again').addEventListener('click', () => { clearSave(world.id); loadWorld(world.id); showStart(); });
+// back to the map menu, or close the app
+document.getElementById('win-menu').addEventListener('click', showStart);
+const byeEl = document.getElementById('bye');
+document.getElementById('exit').addEventListener('click', () => {
+  sfx.stop?.();
+  try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+  window.close(); // the installed app can usually close itself
+  // if the phone wouldn't let it, say how to finish
+  setTimeout(() => { winEl.classList.add('gone'); byeEl.classList.remove('gone'); }, 400);
+});
+document.getElementById('bye-menu').addEventListener('click', () => { byeEl.classList.add('gone'); showStart(); });
 // pause / quit
 const pauseEl = document.getElementById('pause');
 document.getElementById('menu').addEventListener('click', () => {

@@ -432,3 +432,25 @@ v14 — true straight falls, later beacons, coaster across the board
   drop, hills, a loop facing you), home along the very back past the station.
   Ferris wheel moved left, drop tower beside the carousel, log flume and
   pond on the right, bumper cars in the middle back.
+
+v15 — CITY (map 10), Menu and Exit on the finish screen
+- Finish screen: added "Menu" (back to the map menu) and "Exit app" (closes
+  the installed app; if the phone won't allow it, a "See you soon, swipe
+  the app away" screen appears with a way back to the menu).
+- CITY at dusk: downtown towers with lit windows (warm and office-blue),
+  water tanks, antennas with red lights, a helipad, a spire, glowing
+  billboards; shops with lit storefronts, awnings and neon at the front;
+  a plaza with a fountain where you start; streets with yellow dashes and
+  crosswalks, lamps, traffic lights, cars with headlights and taillights,
+  taxis and a bus; a park at the back.
+- Built to fall in profile (side to side):
+  - Red suspension bridge over the river on the right, in two halves, each
+    hanging from its own tower: eat a tower's legs and its whole half
+    (tower top, cables, deck, cars) comes down (test: 598 of 598 pieces).
+  - Elevated train across the back in spans on pillars, with a lit train
+    and a station.
+  - Tower crane over a steel frame going up: eat the mast and the jib, the
+    counterweight and the hanging beam all crash (test: 217 of 217).
+  - Towers drop straight down as a whole when their base is gone.
+- A blimp with a glowing ad floats over the river.
+- ~18,500 pieces. Bot cleared it in 101 s.

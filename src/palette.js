@@ -109,6 +109,9 @@ const P = [
   ['bag2', '#4b78c9', 'blue'], ['bag3', '#3cb371', 'green'], ['bag4', '#8e5fd0', 'purple'], ['bag5', '#f4a23c', 'orange'],
   ['taxi', '#ffcc2e', 'yellow'], ['cone', '#ff6a2a', 'orange'], ['hangar', '#cfd5dc', 'gray'], ['hangarRoof', '#97a2ae', 'gray'],
   ['propRed', '#e5533f', 'red'], ['bus', '#2f8fd8', 'blue'], ['runLight', '#fff2a8', 'yellow'], ['jetRed', '#d8423c', 'red'],
+  // city at dusk (the palette holds at most 256 colours, so the city mostly reuses others)
+  ['blueWin', '#a8dcff', 'blue', true], ['neonPink', '#ff5fa2', 'pink', true], ['neonCyan', '#4ff0ff', 'blue', true],
+  ['girder', '#c4513c', 'red'], ['facadeTan', '#c9b48f', 'brown'],
 ];
 
 export const COLORS = P.map(([name, hex, group, glow]) => ({ name, hex, group, glow: !!glow }));

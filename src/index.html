@@ -80,6 +80,7 @@
   .stats { font-size: 14px; font-weight: 800; opacity: .7; margin: -18px 0 26px; font-variant-numeric: tabular-nums; }
   .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .pill.ghost { background: rgba(255,255,255,.8); color: #2a2f45; }
+  .row.second { margin-top: 10px; }
   .screen { overflow-y: auto; }
   .screen > .panel { padding-block: 16px; }
   @media (max-height: 860px) {
@@ -99,6 +100,9 @@
   .card-park .art { background: linear-gradient(#bfe3f6 0 60%, #8fd06d 60%); }
   .card-park .art::before { content: ""; position: absolute; left: 6px; top: 6px; width: 26px; height: 26px; border-radius: 50%; border: 3px solid #fff; box-shadow: inset 0 0 0 2px #e84a40; }
   .card-park .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea, 22px -30px 0 -3px #f26b6b, 28px -24px 0 -3px #ffd166; }
+  .card-city .art { background: linear-gradient(#2a2350, #6a4f7c 55%, #e08a6a 75%, #5b5f6e 75%); }
+  .card-city .art::before { content: ""; position: absolute; left: 8px; bottom: 16px; width: 10px; height: 34px; background: #5d6a86; box-shadow: 13px 8px 0 0 #c9b48f, 26px -4px 0 0 #a8aab0, 3px -14px 0 -4px #ffe58a, 16px -4px 0 -4px #a8dcff, 29px -16px 0 -4px #ffe58a; }
+  .card-city .art::after { content: ""; position: absolute; left: 14px; bottom: 6px; width: 36px; height: 12px; border-radius: 50%; background: #07080d; box-shadow: 0 0 0 2px #fbf6ea; }
   .card-wrap { display: grid; gap: 4px; }
   .card .tag.resume { color: #c76a12; opacity: 1; font-weight: 800; }
   .restart { justify-self: end; border: 0; background: none; color: var(--ink); opacity: .65; font: 700 13px/1 inherit; font-family: inherit; padding: 6px 8px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -153,6 +157,16 @@
     <button class="pill" id="next">Try the Reef</button>
     <button class="pill ghost" id="again">Play again</button>
   </div>
+  <div class="row second">
+    <button class="pill ghost" id="win-menu">Menu</button>
+    <button class="pill ghost" id="exit">Exit app</button>
+  </div>
+</div></div>
+<div class="screen gone" id="bye"><div class="panel">
+  <div class="hole-ic"></div>
+  <h1 class="small">See you soon</h1>
+  <p>Your phone didn't let the game close itself. Swipe the app away to finish.</p>
+  <div class="row"><button class="pill ghost" id="bye-menu">Back to the menu</button></div>
 </div></div>
 <script>/*BUNDLE*/</script>
 </body>
